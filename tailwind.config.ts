@@ -57,15 +57,66 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        "safe-zone": "hsl(var(--safe-zone))",
-        "safe-zone-light": "hsl(var(--safe-zone-light))",
-        "over-wet-zone": "hsl(var(--over-wet-zone))",
-        "over-wet-zone-light": "hsl(var(--over-wet-zone-light))",
-        "dry-zone": "hsl(var(--dry-zone))",
-        "dry-zone-light": "hsl(var(--dry-zone-light))",
-        "warning-amber": "hsl(var(--warning-amber))",
+        /* Brand Colors */
+        "green-primary": "hsl(var(--green-primary))",
         "green-secondary": "hsl(var(--green-secondary))",
+        "green-light": "hsl(var(--green-light))",
+        "green-bg-soft": "hsl(var(--green-bg-soft))",
+        "green-dark": "hsl(var(--green-dark))",
+
+        /* Blues */
+        "blue-primary": "hsl(var(--blue-primary))",
         "blue-secondary": "hsl(var(--blue-secondary))",
+        "blue-light": "hsl(var(--blue-light))",
+        "blue-deep": "hsl(var(--blue-deep))",
+        "blue-bg-soft": "hsl(var(--blue-bg-soft))",
+
+        /* Alerts */
+        "amber-warning": "hsl(var(--amber-warning))",
+        "amber-soft": "hsl(var(--amber-soft))",
+        "red-critical": "hsl(var(--red-critical))",
+        "red-bg-soft": "hsl(var(--red-bg-soft))",
+        "purple-info": "hsl(var(--purple-info))",
+        "purple-bg-soft": "hsl(var(--purple-bg-soft))",
+
+        /* Zone Colors */
+        "zone-dry": "hsl(var(--zone-dry))",
+        "zone-safe": "hsl(var(--zone-safe))",
+        "zone-over-wet": "hsl(var(--zone-over-wet))",
+        "zone-dry-bg": "hsl(var(--zone-dry-bg))",
+        "zone-safe-bg": "hsl(var(--zone-safe-bg))",
+        "zone-over-wet-bg": "hsl(var(--zone-over-wet-bg))",
+
+        /* UI Neutrals */
+        "ui-bg-main": "hsl(var(--ui-bg-main))",
+        "ui-bg-secondary": "hsl(var(--ui-bg-secondary))",
+        "ui-bg-card": "hsl(var(--ui-bg-card))",
+        "ui-border": "hsl(var(--ui-border))",
+        "ui-divider": "hsl(var(--ui-divider))",
+        "ui-text-primary": "hsl(var(--ui-text-primary))",
+        "ui-text-secondary": "hsl(var(--ui-text-secondary))",
+        "ui-text-muted": "hsl(var(--ui-text-muted))",
+
+        /* Sensor Colors */
+        "sensor-moisture": "hsl(var(--sensor-moisture))",
+        "sensor-light": "hsl(var(--sensor-light))",
+        "sensor-temperature": "hsl(var(--sensor-temperature))",
+        "sensor-humidity": "hsl(var(--sensor-humidity))",
+        "sensor-pump": "hsl(var(--sensor-pump))",
+        "sensor-water": "hsl(var(--sensor-water))",
+
+        /* Interactive */
+        "interactive-hover": "hsl(var(--interactive-hover))",
+        "interactive-active": "hsl(var(--interactive-active))",
+        "interactive-focus": "hsl(var(--interactive-focus))",
+
+        /* Chart */
+        "chart-blue": "hsl(var(--chart-blue))",
+        "chart-green": "hsl(var(--chart-green))",
+        "chart-orange": "hsl(var(--chart-orange))",
+        "chart-purple": "hsl(var(--chart-purple))",
+        "chart-teal": "hsl(var(--chart-teal))",
+        "chart-amber": "hsl(var(--chart-amber))",
       },
       borderRadius: {
         lg: "var(--radius)",

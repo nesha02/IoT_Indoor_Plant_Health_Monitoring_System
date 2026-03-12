@@ -20,8 +20,8 @@ interface MoistureChartRowProps {
 
 export default function MoistureChartRow({ data }: MoistureChartRowProps) {
   return (
-    <div className="rounded-lg border bg-white p-6">
-      <h2 className="text-lg font-bold text-foreground mb-4">
+    <div className="rounded-lg border border-ui-border bg-ui-bg-card p-6">
+      <h2 className="text-lg font-bold text-ui-text-primary mb-4">
         Soil Moisture vs Time
       </h2>
 
@@ -36,62 +36,62 @@ export default function MoistureChartRow({ data }: MoistureChartRowProps) {
               </linearGradient>
             </defs>
 
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--ui-border))" />
             <XAxis
               dataKey="time"
               tick={{ fontSize: 12 }}
-              stroke="#6b7280"
+              stroke="hsl(var(--ui-text-muted))"
               label={{ value: "Time", position: "insideBottomRight", offset: -5 }}
             />
             <YAxis
               label={{ value: "Soil Moisture (%)", angle: -90, position: "insideLeft" }}
               domain={[0, 100]}
               tick={{ fontSize: 12 }}
-              stroke="#6b7280"
+              stroke="hsl(var(--ui-text-muted))"
             />
 
             {/* Reference lines for zones */}
             <ReferenceLine
               y={45}
-              stroke="hsl(0 68% 57%)"
+              stroke="hsl(var(--zone-dry))"
               strokeDasharray="3 3"
-              label={{ value: "Dry Zone", position: "right", fill: "hsl(0 68% 57%)", fontSize: 11 }}
+              label={{ value: "Dry Zone", position: "right", fill: "hsl(var(--zone-dry))", fontSize: 11 }}
             />
             <ReferenceLine
               y={50}
-              stroke="hsl(118 47% 39%)"
+              stroke="hsl(var(--zone-safe))"
               strokeDasharray="3 3"
-              label={{ value: "Safe Zone", position: "right", fill: "hsl(118 47% 39%)", fontSize: 11 }}
+              label={{ value: "Safe Zone", position: "right", fill: "hsl(var(--zone-safe))", fontSize: 11 }}
             />
             <ReferenceLine
               y={80}
-              stroke="hsl(118 47% 39%)"
+              stroke="hsl(var(--zone-safe))"
               strokeDasharray="3 3"
               label={{ value: "", position: "right", fontSize: 11 }}
             />
             <ReferenceLine
               y={85}
-              stroke="hsl(207 79% 48%)"
+              stroke="hsl(var(--zone-over-wet))"
               strokeDasharray="3 3"
-              label={{ value: "Over-wet Zone", position: "right", fill: "hsl(207 79% 48%)", fontSize: 11 }}
+              label={{ value: "Over-wet Zone", position: "right", fill: "hsl(var(--zone-over-wet))", fontSize: 11 }}
             />
 
             <Tooltip
               contentStyle={{
-                backgroundColor: "#fff",
-                border: "1px solid #e5e7eb",
+                backgroundColor: "hsl(var(--ui-bg-card))",
+                border: "1px solid hsl(var(--ui-border))",
                 borderRadius: "0.5rem",
               }}
-              labelStyle={{ color: "#000" }}
+              labelStyle={{ color: "hsl(var(--ui-text-primary))" }}
             />
 
             {/* Main line for moisture */}
             <Line
               type="monotone"
               dataKey="value"
-              stroke="hsl(118 47% 39%)"
+              stroke="hsl(var(--zone-safe))"
               strokeWidth={3}
-              dot={{ fill: "hsl(118 47% 39%)", r: 4 }}
+              dot={{ fill: "hsl(var(--zone-safe))", r: 4 }}
               activeDot={{ r: 6 }}
               isAnimationActive={false}
             />
@@ -101,16 +101,16 @@ export default function MoistureChartRow({ data }: MoistureChartRowProps) {
 
       <div className="mt-4 grid grid-cols-3 gap-4 text-xs">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-dry-zone"></div>
-          <span className="text-muted-foreground">Dry Zone (&lt;45%)</span>
+          <div className="w-3 h-3 bg-zone-dry rounded-full"></div>
+          <span className="text-ui-text-muted">Dry Zone (&lt;45%)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-safe-zone"></div>
-          <span className="text-muted-foreground">Safe Zone (50–80%)</span>
+          <div className="w-3 h-3 bg-zone-safe rounded-full"></div>
+          <span className="text-ui-text-muted">Safe Zone (50–80%)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-over-wet-zone"></div>
-          <span className="text-muted-foreground">Over-wet Zone (&gt;85%)</span>
+          <div className="w-3 h-3 bg-zone-over-wet rounded-full"></div>
+          <span className="text-ui-text-muted">Over-wet Zone (&gt;85%)</span>
         </div>
       </div>
     </div>

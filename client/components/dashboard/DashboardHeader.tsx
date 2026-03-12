@@ -24,14 +24,14 @@ export default function DashboardHeader({
   lastUpdate,
 }: DashboardHeaderProps) {
   return (
-    <header className="bg-white border-b border-border">
+    <header className="bg-ui-bg-card border-b border-ui-border">
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
+            <h1 className="text-3xl font-bold text-ui-text-primary mb-2">
               IoT Indoor Plant Health Monitoring System
             </h1>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-ui-text-secondary">
               <p className="mb-2">
                 Plant Moisture Profile: Dry &lt; 45% | Safe 50–80% | Over-wet
                 &gt; 85%
@@ -41,7 +41,7 @@ export default function DashboardHeader({
           </div>
 
           <div className="flex flex-col gap-3">
-            <label className="text-sm font-medium text-foreground">
+            <label className="text-sm font-medium text-ui-text-primary">
               Select Plant
             </label>
             <Select
@@ -50,7 +50,7 @@ export default function DashboardHeader({
                 onPlantChange(value as "PLANT_01" | "PLANT_02" | "PLANT_03")
               }
             >
-              <SelectTrigger className="w-full md:w-64 bg-background">
+              <SelectTrigger className="w-full md:w-64 bg-ui-bg-main border-ui-border">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

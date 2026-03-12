@@ -23,38 +23,33 @@ export default function StatusCardsRow({ data }: StatusCardsRowProps) {
       <StatusCard
         title="Light Intensity"
         value={`${data.light} lux`}
-        icon={<Cloud className="w-8 h-8 text-blue-secondary" />}
-        color="blue"
+        icon={<Cloud className="w-6 h-6 text-sensor-light" />}
       />
 
       <StatusCard
         title="Temperature"
         value={`${data.temperature}°C`}
-        icon={<Thermometer className="w-8 h-8 text-warning-amber" />}
-        color="orange"
+        icon={<Thermometer className="w-6 h-6 text-sensor-temperature" />}
       />
 
       <StatusCard
         title="Humidity"
         value={`${data.humidity}% RH`}
-        icon={<Wind className="w-8 h-8 text-blue-secondary" />}
-        color="cyan"
+        icon={<Wind className="w-6 h-6 text-sensor-humidity" />}
       />
 
       <StatusCard
         title="Pump Status"
         value={data.pumpStatus}
         subtitle={`Last Watered: ${data.lastWatered}`}
-        icon={<Droplets className="w-8 h-8 text-primary" />}
-        color="green"
+        icon={<Droplets className="w-6 h-6 text-sensor-pump" />}
       />
 
       <StatusCard
         title="Water Delivered"
         value={`${data.lastWaterAmount} mL`}
         subtitle={`Today Total: ${data.todayWaterTotal} mL`}
-        icon={<Droplets className="w-8 h-8 text-blue-secondary" />}
-        color="blue"
+        icon={<Droplets className="w-6 h-6 text-sensor-water" />}
       />
     </div>
   );

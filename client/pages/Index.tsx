@@ -19,7 +19,7 @@ export default function Index() {
   const currentPlantData = plants[selectedPlant].data;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-ui-bg-main">
       <DashboardHeader
         selectedPlant={selectedPlant}
         onPlantChange={setSelectedPlant}

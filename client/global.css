@@ -12,64 +12,105 @@
    * A different format will require also updating the theme in tailwind.config.ts.
   */
   :root {
-    --background: 213 33% 97%;
-    --foreground: 213 27% 26%;
+    --background: 214 24% 97%;
+    --foreground: 217 33% 17%;
 
     --card: 0 0% 100%;
-    --card-foreground: 213 27% 26%;
+    --card-foreground: 217 33% 17%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 213 27% 26%;
+    --popover-foreground: 217 33% 17%;
 
-    --primary: 118 47% 39%;
+    --primary: 122 49% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 207 89% 59%;
+    --secondary: 207 100% 60%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 88%;
-    --muted-foreground: 217 13% 47%;
+    --muted: 214 15% 91%;
+    --muted-foreground: 217 12% 47%;
 
-    --accent: 118 47% 39%;
+    --accent: 122 49% 42%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 68% 57%;
+    --destructive: 4 90% 64%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 118 47% 39%;
+    --border: 214 15% 91%;
+    --input: 214 15% 91%;
+    --ring: 207 100% 60%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 213 33% 97%;
-
-    --sidebar-foreground: 213 27% 26%;
-
-    --sidebar-primary: 118 47% 39%;
-
+    --sidebar-background: 214 24% 97%;
+    --sidebar-foreground: 217 33% 17%;
+    --sidebar-primary: 122 49% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 24% 94%;
+    --sidebar-accent-foreground: 217 33% 17%;
+    --sidebar-border: 214 15% 91%;
+    --sidebar-ring: 207 100% 60%;
 
-    --sidebar-accent: 213 33% 94%;
+    /* === PRIMARY BRAND COLORS (GREENS) === */
+    --green-primary: 122 49% 42%;
+    --green-secondary: 120 47% 50%;
+    --green-light: 120 65% 82%;
+    --green-bg-soft: 120 100% 94%;
+    --green-dark: 120 60% 20%;
 
-    --sidebar-accent-foreground: 213 27% 26%;
+    /* === DATA & TECHNOLOGY COLORS (BLUES) === */
+    --blue-primary: 207 100% 60%;
+    --blue-secondary: 207 100% 70%;
+    --blue-light: 207 100% 85%;
+    --blue-deep: 207 100% 48%;
+    --blue-bg-soft: 207 100% 97%;
 
-    --sidebar-border: 0 0% 88%;
+    /* === ALERT & SYSTEM STATUS COLORS === */
+    --amber-warning: 38 92% 54%;
+    --amber-soft: 48 100% 88%;
+    --red-critical: 4 90% 64%;
+    --red-bg-soft: 0 100% 97%;
+    --purple-info: 260 87% 57%;
+    --purple-bg-soft: 260 100% 97%;
 
-    --sidebar-ring: 207 89% 59%;
+    /* === SOIL MOISTURE ZONE COLORS === */
+    --zone-dry: 4 90% 64%;
+    --zone-safe: 120 48% 55%;
+    --zone-over-wet: 207 100% 60%;
+    --zone-dry-bg: 0 100% 96%;
+    --zone-safe-bg: 120 89% 92%;
+    --zone-over-wet-bg: 207 100% 93%;
 
-    /* Dashboard specific colors */
-    --safe-zone: 118 47% 39%;
-    --safe-zone-light: 119 34% 76%;
-    --over-wet-zone: 207 79% 48%;
-    --over-wet-zone-light: 207 89% 79%;
-    --dry-zone: 0 68% 57%;
-    --dry-zone-light: 0 75% 84%;
-    --warning-amber: 40 98% 61%;
+    /* === NEUTRAL UI COLORS === */
+    --ui-bg-main: 214 24% 97%;
+    --ui-bg-secondary: 214 20% 94%;
+    --ui-bg-card: 0 0% 100%;
+    --ui-border: 214 15% 91%;
+    --ui-divider: 217 13% 86%;
+    --ui-text-primary: 217 33% 17%;
+    --ui-text-secondary: 217 12% 47%;
+    --ui-text-muted: 217 10% 66%;
 
-    /* Secondary green */
-    --green-secondary: 120 33% 57%;
-    --blue-secondary: 207 89% 69%;
+    /* === SENSOR CARD ACCENT COLORS === */
+    --sensor-moisture: 122 49% 42%;
+    --sensor-light: 38 92% 54%;
+    --sensor-temperature: 33 100% 49%;
+    --sensor-humidity: 179 100% 55%;
+    --sensor-pump: 207 100% 60%;
+    --sensor-water: 180 84% 42%;
+
+    /* === INTERACTIVE UI COLORS === */
+    --interactive-hover: 207 100% 52%;
+    --interactive-active: 122 49% 42%;
+    --interactive-focus: 207 100% 75%;
+
+    /* === CHART PALETTE === */
+    --chart-blue: 207 100% 60%;
+    --chart-green: 120 47% 50%;
+    --chart-orange: 33 100% 49%;
+    --chart-purple: 260 87% 57%;
+    --chart-teal: 174 100% 45%;
+    --chart-amber: 38 92% 54%;
   }
 
   .dark {
