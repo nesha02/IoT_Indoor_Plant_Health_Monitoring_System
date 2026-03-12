@@ -12,9 +12,9 @@ export default function MoistureCard({ moisture }: MoistureCardProps) {
   };
 
   const getMoistureColor = (value: number) => {
-    if (value < 45) return "bg-red-500";
-    if (value > 85) return "bg-blue-500";
-    return "bg-primary";
+    if (value < 45) return "bg-dry-zone";
+    if (value > 85) return "bg-over-wet-zone";
+    return "bg-safe-zone";
   };
 
   const status = getMoistureStatus(moisture);
@@ -38,30 +38,30 @@ export default function MoistureCard({ moisture }: MoistureCardProps) {
       {/* Range bar with zones */}
       <div className="relative h-8 bg-gray-100 rounded-full overflow-hidden mb-3">
         {/* Dry zone - 0-45 */}
-        <div className="absolute left-0 top-0 h-full w-[45%] bg-red-500 opacity-30"></div>
+        <div className="absolute left-0 top-0 h-full w-[45%] bg-dry-zone-light opacity-70"></div>
         {/* Safe zone - 45-85 */}
-        <div className="absolute left-[45%] top-0 h-full w-[40%] bg-primary opacity-30"></div>
+        <div className="absolute left-[45%] top-0 h-full w-[40%] bg-safe-zone-light opacity-70"></div>
         {/* Over-wet zone - 85-100 */}
-        <div className="absolute right-0 top-0 h-full w-[15%] bg-blue-500 opacity-30"></div>
+        <div className="absolute right-0 top-0 h-full w-[15%] bg-over-wet-zone-light opacity-70"></div>
 
         {/* Current value indicator */}
         <div
-          className="absolute top-1/2 -translate-y-1/2 w-1 h-full bg-gray-800 transition-all"
+          className="absolute top-1/2 -translate-y-1/2 w-1 h-full bg-foreground transition-all"
           style={{ left: `${Math.max(2, Math.min(98, moisture))}%` }}
         ></div>
       </div>
 
       <div className="flex text-xs text-muted-foreground">
         <span className="flex-1">
-          <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-1"></span>
+          <span className="inline-block w-2 h-2 rounded-full bg-dry-zone mr-1"></span>
           Dry &lt;45%
         </span>
         <span className="flex-1">
-          <span className="inline-block w-2 h-2 rounded-full bg-primary mr-1"></span>
+          <span className="inline-block w-2 h-2 rounded-full bg-safe-zone mr-1"></span>
           Safe 50–80%
         </span>
         <span className="flex-1">
-          <span className="inline-block w-2 h-2 rounded-full bg-blue-500 mr-1"></span>
+          <span className="inline-block w-2 h-2 rounded-full bg-over-wet-zone mr-1"></span>
           Over-wet &gt;85%
         </span>
       </div>

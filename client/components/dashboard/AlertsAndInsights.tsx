@@ -27,25 +27,25 @@ export default function AlertsAndInsights({
               className={`p-3 rounded-md border flex items-start gap-3 ${
                 alert.active
                   ? alert.type === "dry"
-                    ? "bg-red-50 border-red-200"
-                    : "bg-amber-50 border-amber-200"
-                  : "bg-gray-50 border-gray-200 opacity-60"
+                    ? "bg-dry-zone-light/20 border-dry-zone/40"
+                    : "bg-warning-amber/10 border-warning-amber/30"
+                  : "bg-muted/40 border-border opacity-60"
               }`}
             >
               {alert.type === "dry" ? (
-                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-dry-zone flex-shrink-0 mt-0.5" />
               ) : alert.type === "over" ? (
-                <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="w-5 h-5 text-warning-amber flex-shrink-0 mt-0.5" />
               ) : (
-                <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="w-5 h-5 text-warning-amber flex-shrink-0 mt-0.5" />
               )}
               <span
                 className={`text-sm ${
                   alert.active
                     ? alert.type === "dry"
-                      ? "text-red-800"
-                      : "text-amber-800"
-                    : "text-gray-600"
+                      ? "text-dry-zone font-medium"
+                      : "text-warning-amber font-medium"
+                    : "text-muted-foreground"
                 }`}
               >
                 {alert.message}
@@ -56,9 +56,9 @@ export default function AlertsAndInsights({
       </div>
 
       {/* ML Insights Panel */}
-      <div className="rounded-lg border bg-gradient-to-br from-primary/5 to-secondary/5 p-6">
+      <div className="rounded-lg border bg-gradient-to-br from-primary/10 to-secondary/10 p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Zap className="w-5 h-5 text-primary" />
+          <Zap className="w-5 h-5 text-secondary" />
           <h2 className="text-lg font-bold text-foreground">ML Insights</h2>
         </div>
 
@@ -74,7 +74,7 @@ export default function AlertsAndInsights({
             </div>
             <div className="bg-white rounded-lg p-3 border border-border">
               <p className="text-xs text-muted-foreground mb-1">Confidence</p>
-              <p className="text-lg font-bold text-primary">
+              <p className="text-lg font-bold text-secondary">
                 {data.mlInsights.confidence}%
               </p>
             </div>

@@ -31,8 +31,8 @@ export default function MoistureChartRow({ data }: MoistureChartRowProps) {
             {/* Background zones */}
             <defs>
               <linearGradient id="colorSafe" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(142 71.8% 29.2%)" stopOpacity={0.1} />
-                <stop offset="95%" stopColor="hsl(142 71.8% 29.2%)" stopOpacity={0} />
+                <stop offset="5%" stopColor="hsl(118 47% 39%)" stopOpacity={0.1} />
+                <stop offset="95%" stopColor="hsl(118 47% 39%)" stopOpacity={0} />
               </linearGradient>
             </defs>
 
@@ -53,27 +53,27 @@ export default function MoistureChartRow({ data }: MoistureChartRowProps) {
             {/* Reference lines for zones */}
             <ReferenceLine
               y={45}
-              stroke="#ef4444"
+              stroke="hsl(0 68% 57%)"
               strokeDasharray="3 3"
-              label={{ value: "Dry Zone", position: "right", fill: "#ef4444", fontSize: 11 }}
+              label={{ value: "Dry Zone", position: "right", fill: "hsl(0 68% 57%)", fontSize: 11 }}
             />
             <ReferenceLine
               y={50}
-              stroke="hsl(142 71.8% 29.2%)"
+              stroke="hsl(118 47% 39%)"
               strokeDasharray="3 3"
-              label={{ value: "Safe Zone", position: "right", fill: "hsl(142 71.8% 29.2%)", fontSize: 11 }}
+              label={{ value: "Safe Zone", position: "right", fill: "hsl(118 47% 39%)", fontSize: 11 }}
             />
             <ReferenceLine
               y={80}
-              stroke="hsl(142 71.8% 29.2%)"
+              stroke="hsl(118 47% 39%)"
               strokeDasharray="3 3"
               label={{ value: "", position: "right", fontSize: 11 }}
             />
             <ReferenceLine
               y={85}
-              stroke="#3b82f6"
+              stroke="hsl(207 79% 48%)"
               strokeDasharray="3 3"
-              label={{ value: "Over-wet Zone", position: "right", fill: "#3b82f6", fontSize: 11 }}
+              label={{ value: "Over-wet Zone", position: "right", fill: "hsl(207 79% 48%)", fontSize: 11 }}
             />
 
             <Tooltip
@@ -89,9 +89,9 @@ export default function MoistureChartRow({ data }: MoistureChartRowProps) {
             <Line
               type="monotone"
               dataKey="value"
-              stroke="hsl(142 71.8% 29.2%)"
+              stroke="hsl(118 47% 39%)"
               strokeWidth={3}
-              dot={{ fill: "hsl(142 71.8% 29.2%)", r: 4 }}
+              dot={{ fill: "hsl(118 47% 39%)", r: 4 }}
               activeDot={{ r: 6 }}
               isAnimationActive={false}
             />
@@ -101,15 +101,15 @@ export default function MoistureChartRow({ data }: MoistureChartRowProps) {
 
       <div className="mt-4 grid grid-cols-3 gap-4 text-xs">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-red-500"></div>
+          <div className="w-3 h-3 bg-dry-zone"></div>
           <span className="text-muted-foreground">Dry Zone (&lt;45%)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-primary"></div>
+          <div className="w-3 h-3 bg-safe-zone"></div>
           <span className="text-muted-foreground">Safe Zone (50–80%)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-blue-500"></div>
+          <div className="w-3 h-3 bg-over-wet-zone"></div>
           <span className="text-muted-foreground">Over-wet Zone (&gt;85%)</span>
         </div>
       </div>

@@ -46,7 +46,7 @@ export default function AdvancedAnalytics({
         <CollapsibleContent className="border-t border-border">
           <div className="p-6 space-y-4">
             {/* Irrigation Impact Card */}
-            <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-4 mb-4">
+            <div className="rounded-lg border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent p-4 mb-4">
               <h3 className="text-sm font-semibold text-foreground mb-3">
                 Last Irrigation Impact
               </h3>
@@ -75,13 +75,13 @@ export default function AdvancedAnalytics({
                     {data.irrigationImpact.currentMoisture}%
                   </span>
                 </div>
-                <div className="pt-2 border-t border-primary/20">
+                <div className="pt-2 border-t border-primary/30">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-foreground">
                       Moisture Increase
                     </span>
                     <span className="font-bold text-primary text-lg">
-                      {data.irrigationImpact.moistureIncrease}%
+                      +{data.irrigationImpact.moistureIncrease}%
                     </span>
                   </div>
                 </div>

@@ -12,56 +12,64 @@
    * A different format will require also updating the theme in tailwind.config.ts.
   */
   :root {
-    --background: 0 0% 98%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 213 33% 97%;
+    --foreground: 213 27% 26%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 213 27% 26%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 213 27% 26%;
 
-    --primary: 142 71.8% 29.2%;
+    --primary: 118 47% 39%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 100% 50%;
+    --secondary: 207 89% 59%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 0 0% 88%;
+    --muted-foreground: 217 13% 47%;
 
-    --accent: 142 71.8% 29.2%;
+    --accent: 118 47% 39%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 68% 57%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 142 71.8% 29.2%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 118 47% 39%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 213 33% 97%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-foreground: 213 27% 26%;
 
-    --sidebar-primary: 142 71.8% 29.2%;
+    --sidebar-primary: 118 47% 39%;
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-primary-foreground: 0 0% 100%;
 
-    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent: 213 33% 94%;
 
-    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-accent-foreground: 213 27% 26%;
 
-    --sidebar-border: 220 13% 91%;
+    --sidebar-border: 0 0% 88%;
 
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 207 89% 59%;
 
     /* Dashboard specific colors */
-    --safe-zone: 142 71.8% 29.2%;
-    --over-wet-zone: 210 100% 50%;
-    --dry-zone: 0 84.2% 60.2%;
+    --safe-zone: 118 47% 39%;
+    --safe-zone-light: 119 34% 76%;
+    --over-wet-zone: 207 79% 48%;
+    --over-wet-zone-light: 207 89% 79%;
+    --dry-zone: 0 68% 57%;
+    --dry-zone-light: 0 75% 84%;
+    --warning-amber: 40 98% 61%;
+
+    /* Secondary green */
+    --green-secondary: 120 33% 57%;
+    --blue-secondary: 207 89% 69%;
   }
 
   .dark {
