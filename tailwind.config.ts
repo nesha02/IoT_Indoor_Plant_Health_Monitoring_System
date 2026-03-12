@@ -57,6 +57,9 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        "safe-zone": "hsl(var(--safe-zone))",
+        "over-wet-zone": "hsl(var(--over-wet-zone))",
+        "dry-zone": "hsl(var(--dry-zone))",
       },
       borderRadius: {
         lg: "var(--radius)",

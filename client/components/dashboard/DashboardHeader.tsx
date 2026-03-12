@@ -1,0 +1,71 @@
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface DashboardHeaderProps {
+  selectedPlant: "PLANT_01" | "PLANT_02" | "PLANT_03";
+  onPlantChange: (plant: "PLANT_01" | "PLANT_02" | "PLANT_03") => void;
+  plants: {
+    PLANT_01: { name: string };
+    PLANT_02: { name: string };
+    PLANT_03: { name: string };
+  };
+  lastUpdate: string;
+}
+
+export default function DashboardHeader({
+  selectedPlant,
+  onPlantChange,
+  plants,
+  lastUpdate,
+}: DashboardHeaderProps) {
+  return (
+    <header className="bg-white border-b border-border">
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              IoT Indoor Plant Health Monitoring System
+            </h1>
+            <div className="text-sm text-muted-foreground">
+              <p className="mb-2">
+                Plant Moisture Profile: Dry &lt; 45% | Safe 50–80% | Over-wet
+                &gt; 85%
+              </p>
+              <p>Last Updated: {lastUpdate}</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <label className="text-sm font-medium text-foreground">
+              Select Plant
+            </label>
+            <Select
+              value={selectedPlant}
+              onValueChange={(value) =>
+                onPlantChange(value as "PLANT_01" | "PLANT_02" | "PLANT_03")
+              }
+            >
+              <SelectTrigger className="w-full md:w-64 bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="PLANT_01">
+                  PLANT_01 (Snake Plant)
+                </SelectItem>
+                <SelectItem value="PLANT_02">
+                  PLANT_02 (Money Plant)
+                </SelectItem>
+                <SelectItem value="PLANT_03">PLANT_03 (Cactus)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
