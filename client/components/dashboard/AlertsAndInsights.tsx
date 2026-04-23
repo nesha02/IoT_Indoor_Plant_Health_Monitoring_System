@@ -21,37 +21,28 @@ export default function AlertsAndInsights({
       <div className="rounded-lg border border-ui-border bg-ui-bg-card p-6">
         <h2 className="text-lg font-bold text-ui-text-primary mb-4">Alerts</h2>
         <div className="space-y-3">
-          {data.alerts.map((alert, index) => (
-            <div
-              key={index}
-              className={`p-3 rounded-md border flex items-start gap-3 ${
-                alert.active
-                  ? alert.type === "dry"
-                    ? "bg-red-bg-soft border-red-critical/40"
-                    : "bg-amber-soft border-amber-warning/40"
-                  : "bg-ui-bg-secondary border-ui-border opacity-60"
-              }`}
-            >
-              {alert.type === "dry" ? (
-                <AlertCircle className="w-5 h-5 text-red-critical flex-shrink-0 mt-0.5" />
-              ) : alert.type === "over" ? (
-                <AlertTriangle className="w-5 h-5 text-amber-warning flex-shrink-0 mt-0.5" />
-              ) : (
-                <AlertTriangle className="w-5 h-5 text-amber-warning flex-shrink-0 mt-0.5" />
-              )}
-              <span
-                className={`text-sm ${
-                  alert.active
-                    ? alert.type === "dry"
-                      ? "text-red-critical font-medium"
-                      : "text-amber-warning font-medium"
-                    : "text-ui-text-muted"
-                }`}
+          {data.alerts.length === 0 ? (
+            <div className="text-ui-text-muted">No alerts configured.</div>
+          ) : (
+            data.alerts.map((alert, index) => (
+              <div
+                key={index}
+                className={`p-3 rounded-md border flex items-start gap-3 shadow-lg
+                  ${alert.active ? 'border-2 border-blue-600 bg-yellow-100' : 'border-ui-border bg-ui-bg-secondary opacity-60'}`}
               >
-                {alert.message}
-              </span>
-            </div>
-          ))}
+                {alert.type === "dry" ? (
+                  <AlertCircle className="w-5 h-5 text-red-critical flex-shrink-0 mt-0.5" />
+                ) : alert.type === "over" ? (
+                  <AlertTriangle className="w-5 h-5 text-amber-warning flex-shrink-0 mt-0.5" />
+                ) : (
+                  <AlertTriangle className="w-5 h-5 text-amber-warning flex-shrink-0 mt-0.5" />
+                )}
+                <span className={`text-sm font-bold ${alert.active ? 'text-red-700' : 'text-ui-text-muted'}`}>
+                  {alert.message}
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
