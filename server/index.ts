@@ -23,6 +23,7 @@ async function connectDB() {
 }
 
 connectDB().catch(console.error);
+console.log("Gemini key loaded:", process.env.GEMINI_API_KEY ? "YES ✅" : "NO ❌");
 
 // ─────────────────────────────────────────────
 //  PLANT THRESHOLDS
@@ -68,6 +69,8 @@ function getAlertStatus(
   if (soil > thresholds.overwet) return "Over-watering risk";
   return "Safe";
 }
+
+
 
 // ─────────────────────────────────────────────
 //  SERVER
@@ -464,5 +467,191 @@ export function createServer() {
     }
   });
 
+  // ─────────────────────────────────────────
+  //  PHASE 8 — CHATBOT (Gemini LLM — Free Tier)
+  //  POST /api/chatbot
+  //  Builds rich live context from MongoDB → sends to Gemini → returns answer
+  // ─────────────────────────────────────────
+ 
+  app.post("/api/chatbot", async (req, res) => {
+    try {
+      const { question, history, selectedPlant } = req.body;
+ 
+      if (!question || typeof question !== "string") {
+        return res.status(400).json({ error: "Question is required" });
+      }
+ 
+      // ── Gather live context from all 3 plants ────────────────────────────
+ 
+      const sensorData = await sensorCollection
+        .find()
+        .sort({ timestamp: -1 })
+        .limit(1)
+        .toArray();
+ 
+      if (!sensorData.length) {
+        return res.json({ question, answer: "I can't access sensor data right now. Please check if the system is running." });
+      }
+ 
+      const latest = sensorData[0];
+ 
+      const plantsContext = ["plant1", "plant2", "plant3"].map((pid) => {
+        const plantType = getPlantType(latest, pid);
+        const soil = getSoil(latest, pid);
+        const thresholds = getThresholds(plantType);
+        const alert = getAlertStatus(soil, thresholds);
+        return { id: pid, plantType, soil, thresholds, alert };
+      });
+ 
+      // Last watering event per plant
+      const wateringContext = await Promise.all(
+        ["plant1", "plant2", "plant3"].map(async (pid) => {
+          const events = await wateringCollection
+            .find({ plant_id: pid })
+            .sort({ timestamp: -1 })
+            .limit(1)
+            .toArray();
+          return { plant_id: pid, last_watering: events[0] ?? null };
+        })
+      );
+ 
+      // Recent moisture history for trend analysis (last 10 readings)
+      const recentHistory = await sensorCollection
+        .find()
+        .sort({ timestamp: -1 })
+        .limit(10)
+        .toArray();
+ 
+      const moistureTrend = recentHistory.reverse().map((d: any) => ({
+        time: new Date(d.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        plant1: d.soil1_pct?.toFixed(1),
+        plant2: d.soil2_pct?.toFixed(1),
+        plant3: d.soil3_pct?.toFixed(1),
+      }));
+ 
+      // All watering events (last 5) for pattern analysis
+      const recentWateringAll = await wateringCollection
+        .find()
+        .sort({ timestamp: -1 })
+        .limit(5)
+        .toArray();
+ 
+      // ── Build rich system prompt ─────────────────────────────────────────
+ 
+      const systemPrompt = `
+      You are an intelligent plant care assistant for an IoT Indoor Plant Health Monitoring System.
+      You have real-time access to sensor data and irrigation history. You help users understand their plants,
+      explain trends and anomalies, and support data-driven decisions.
+      
+      === CURRENT SENSOR READINGS (${new Date(latest.timestamp).toLocaleString()}) ===
+      Temperature: ${latest.temperature ?? "N/A"}°C
+      Humidity: ${latest.humidity ?? "N/A"}%
+      Light Level: ${latest.light ?? "N/A"} lux
+      
+      === PLANT STATUS ===
+      ${plantsContext
+        .map(
+          (p) =>
+            `${p.id} - ${p.plantType.replace(/_/g, " ")} (${p.plantType}):
+        - Soil Moisture: ${p.soil.toFixed(1)}%
+        - Status: ${p.alert}
+        - Dry threshold: ${p.thresholds.dry}% | Safe target: ${p.thresholds.safe}% | Over-wet limit: ${p.thresholds.overwet}%`
+        )
+        .join("\n")}
+      
+      === LAST WATERING EVENTS ===
+      ${wateringContext
+        .map((w) =>
+          w.last_watering
+            ? `${w.plant_id}: watered at ${new Date(w.last_watering.timestamp).toLocaleString()}, soil ${w.last_watering.soil_before?.toFixed(1)}% → ${w.last_watering.soil_after?.toFixed(1)}% (gain: +${w.last_watering.impact_gain?.toFixed(1)}%, duration: ${w.last_watering.duration_sec}s, ML prediction confidence: ${(w.last_watering.prediction * 100).toFixed(0)}%)`
+            : `${w.plant_id}: no watering events recorded yet`
+        )
+        .join("\n")}
+      
+      === RECENT MOISTURE TREND (last 10 readings) ===
+      ${moistureTrend.map((t: any) => `${t.time} → Plant1: ${t.plant1}%, Plant2: ${t.plant2}%, Plant3: ${t.plant3}%`).join("\n")}
+      
+      === RECENT IRRIGATION HISTORY (last 5 events across all plants) ===
+      ${recentWateringAll.length > 0
+        ? recentWateringAll.map((e: any) =>
+            `${e.plant_id} (${e.plant_type}): ${new Date(e.timestamp).toLocaleString()} — soil gain +${e.impact_gain?.toFixed(1)}%`
+          ).join("\n")
+        : "No irrigation events recorded yet."}
+      
+      === SYSTEM INFO ===
+      - 3 plants monitored: Money Plant, Snake Plant, Cactus
+      - TinyML model runs on ESP32 to predict watering needs
+      - Pump activates automatically when ML prediction > 50% AND soil < dry threshold
+      - Sensors: soil moisture (capacitive), DHT22 (temp/humidity), BH1750 (light)
+      - Data flows: ESP32 → MQTT → Python bridge → MongoDB → This dashboard
+      
+      === YOUR ROLE ===
+      - Answer natural language questions about the plants and sensor data
+      - Explain trends, anomalies, and comparisons visible in the data
+      - Guide users in understanding the dashboard sections
+      - Support decision-making: "which plant needs attention?", "what factors affect moisture drop?"
+      - Be conversational, friendly, and clear
+      - Keep answers focused — 2-5 sentences for simple questions, more detail for complex ones
+      - Use the actual numbers from the data above in your answers
+            `.trim();
+ 
+      // ── Build conversation history for multi-turn context ────────────────
+ 
+      const contents: any[] = [];
+ 
+      if (Array.isArray(history)) {
+        for (const msg of history) {
+          if (msg.role === "user") {
+            contents.push({ role: "user", parts: [{ text: msg.content }] });
+          } else if (msg.role === "assistant") {
+            contents.push({ role: "model", parts: [{ text: msg.content }] });
+          }
+        }
+      }
+ 
+      contents.push({ role: "user", parts: [{ text: question }] });
+ 
+      // ── Call Gemini API (free tier) ──────────────────────────────────────
+ 
+      const geminiKey = process.env.GEMINI_API_KEY ?? "";
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${geminiKey}`;
+ 
+      const response = await fetch(geminiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: [{ text: systemPrompt }],
+          },
+          contents,
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 512,
+          },
+        }),
+      });
+ 
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Gemini API error:", errText);
+        return res.status(500).json({ error: "Chatbot API call failed" });
+      }
+ 
+      const data: any = await response.json();
+ 
+      // Extract text from Gemini response
+      const answer =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text ??
+        "Sorry, I couldn't generate a response. Please try again.";
+ 
+      res.json({ question, answer });
+ 
+    } catch (error) {
+      console.error("Chatbot endpoint error:", error);
+      res.status(500).json({ error: "Chatbot failed" });
+    }
+  });
+ 
   return app;
 }
+ 

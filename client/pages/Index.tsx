@@ -4,6 +4,7 @@ import StatusCardsRow from "@/components/dashboard/StatusCardsRow";
 import MoistureChartRow from "@/components/dashboard/MoistureChartRow";
 import AlertsAndInsights from "@/components/dashboard/AlertsAndInsights";
 import AdvancedAnalytics from "@/components/dashboard/AdvancedAnalytics";
+import Chatbot from "@/components/dashboard/Chatbot";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Index() {
@@ -13,6 +14,9 @@ export default function Index() {
   const [plantData, setPlantData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+    // Controls the chatbot open/close from the header button
+  const [chatbotOpen, setChatbotOpen] = useState(false);
 
   const { toast } = useToast();
 
@@ -133,16 +137,61 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-ui-bg-main">
-      <DashboardHeader
-        selectedPlant={selectedPlant}
-        onPlantChange={setSelectedPlant}
-        plants={{
-          PLANT_01: { name: "Snake Plant" },
-          PLANT_02: { name: "Money Plant" },
-          PLANT_03: { name: "Cactus" },
-        }}
-        lastUpdate={plantData?.lastUpdate || "-"}
-      />
+
+      {/* ── Header row with chatbot button on the right ── */}
+      <div style={{ position: "relative" }}>
+        <DashboardHeader
+          selectedPlant={selectedPlant}
+          onPlantChange={setSelectedPlant}
+          plants={{
+            PLANT_01: { name: "Snake Plant" },
+            PLANT_02: { name: "Money Plant" },
+            PLANT_03: { name: "Cactus" },
+          }}
+          lastUpdate={plantData?.lastUpdate || "-"}
+        />
+
+        {/* Plant Assistant button — sits in top-right of header */}
+        <button
+          onClick={() => setChatbotOpen((o) => !o)}
+          aria-label="Toggle plant assistant"
+          style={{
+            position: "absolute",
+            top: "50%",
+            right: "24px",
+            transform: "translateY(-50%)",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "8px 16px",
+            borderRadius: "24px",
+            border: "1px solid rgba(22,163,74,0.8)",
+            background: chatbotOpen
+              ? "linear-gradient(135deg, #16a34a, #15803d)"
+              : "rgba(22,163,74,0.12)",
+            color: chatbotOpen ? "#fff" : "#20753f",
+            fontSize: "14px",
+            fontWeight: 600,
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            zIndex: 40,
+            whiteSpace: "nowrap",
+          }}
+          onMouseEnter={(e) => {
+            if (!chatbotOpen) {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(22,163,74,0.25)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!chatbotOpen) {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(22,163,74,0.12)";
+            }
+          }}
+        >
+          <span style={{ fontSize: "18px" }}>🌿</span>
+          Plant Assistant
+        </button>
+      </div>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
         {loading ? (
@@ -160,6 +209,13 @@ export default function Index() {
           <div>No data available.</div>
         )}
       </main>
+
+      {/* Chatbot — controlled by header button */}
+      <Chatbot
+        selectedPlant={plantIdMap[selectedPlant]}
+        isOpen={chatbotOpen}
+        onToggle={() => setChatbotOpen((o) => !o)}
+      />
     </div>
   );
 }
