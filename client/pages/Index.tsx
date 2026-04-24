@@ -138,60 +138,18 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-ui-bg-main">
 
-      {/* ── Header row with chatbot button on the right ── */}
-      <div style={{ position: "relative" }}>
-        <DashboardHeader
-          selectedPlant={selectedPlant}
-          onPlantChange={setSelectedPlant}
-          plants={{
-            PLANT_01: { name: "Snake Plant" },
-            PLANT_02: { name: "Money Plant" },
-            PLANT_03: { name: "Cactus" },
-          }}
-          lastUpdate={plantData?.lastUpdate || "-"}
-        />
 
-        {/* Plant Assistant button — sits in top-right of header */}
-        <button
-          onClick={() => setChatbotOpen((o) => !o)}
-          aria-label="Toggle plant assistant"
-          style={{
-            position: "absolute",
-            top: "50%",
-            right: "24px",
-            transform: "translateY(-50%)",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "8px 16px",
-            borderRadius: "24px",
-            border: "1px solid rgba(22,163,74,0.8)",
-            background: chatbotOpen
-              ? "linear-gradient(135deg, #16a34a, #15803d)"
-              : "rgba(22,163,74,0.12)",
-            color: chatbotOpen ? "#fff" : "#20753f",
-            fontSize: "14px",
-            fontWeight: 600,
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-            zIndex: 40,
-            whiteSpace: "nowrap",
-          }}
-          onMouseEnter={(e) => {
-            if (!chatbotOpen) {
-              (e.currentTarget as HTMLButtonElement).style.background = "rgba(22,163,74,0.25)";
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!chatbotOpen) {
-              (e.currentTarget as HTMLButtonElement).style.background = "rgba(22,163,74,0.12)";
-            }
-          }}
-        >
-          <span style={{ fontSize: "18px" }}>🌿</span>
-          Plant Assistant
-        </button>
-      </div>
+      {/* ── Header row ── */}
+      <DashboardHeader
+        selectedPlant={selectedPlant}
+        onPlantChange={setSelectedPlant}
+        plants={{
+          PLANT_01: { name: "Snake Plant" },
+          PLANT_02: { name: "Money Plant" },
+          PLANT_03: { name: "Cactus" },
+        }}
+        lastUpdate={plantData?.lastUpdate || "-"}
+      />
 
       <main className="container mx-auto px-4 py-8 space-y-8">
         {loading ? (
@@ -210,12 +168,86 @@ export default function Index() {
         )}
       </main>
 
-      {/* Chatbot — controlled by header button */}
+      {/* Floating Plant Assistant Button */}
+      <button
+        onClick={() => setChatbotOpen((o) => !o)}
+        aria-label="Toggle plant assistant"
+        style={{
+          position: "fixed",
+          bottom: "32px",
+          left: "24px",
+          zIndex: 50,
+          border: "none",
+          background: "transparent",
+          padding: 0,
+          cursor: "pointer",
+        }}
+        className="plant-assistant-cloud highlight-bounce"
+      >
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "72px",
+            height: "58px",
+            borderRadius: "32px 32px 32px 32px / 40px 40px 28px 40px",
+            background: chatbotOpen
+              ? "linear-gradient(135deg, #16a34a 60%, #15803d 100%)"
+              : "linear-gradient(135deg, #e0f7ef 60%, #b9f5d8 100%)",
+            boxShadow: chatbotOpen
+              ? "0 0 24px 8px #4ade80, 0 6px 24px rgba(22,163,74,0.18)"
+              : "0 0 18px 4px #a7f3d0, 0 6px 24px rgba(22,163,74,0.10)",
+            border: chatbotOpen
+              ? "2.5px solid #16a34a"
+              : "2.5px solid #a7f3d0",
+            transition: "all 0.2s cubic-bezier(.4,0,.2,1)",
+            position: "relative",
+          }}
+        >
+          <span style={{ fontSize: "2.2rem", marginRight: "-2px", filter: chatbotOpen ? "drop-shadow(0 0 8px #4ade80)" : "drop-shadow(0 0 4px #a7f3d0)" }}>☁️</span>
+          <span style={{
+            position: "absolute",
+            fontSize: "1.7rem",
+            marginLeft: "-36px",
+            marginTop: "12px",
+            pointerEvents: "none",
+            filter: chatbotOpen ? "drop-shadow(0 0 8px #4ade80)" : "drop-shadow(0 0 4px #a7f3d0)"
+          }}>🌿</span>
+        </span>
+      </button>
+
+      {/* Chatbot — controlled by floating button */}
       <Chatbot
         selectedPlant={plantIdMap[selectedPlant]}
         isOpen={chatbotOpen}
         onToggle={() => setChatbotOpen((o) => !o)}
       />
+
+      {/* Responsive and highlight styles for the floating button */}
+      <style>{`
+        @media (max-width: 640px) {
+          .plant-assistant-cloud {
+            left: 12px !important;
+            bottom: 16px !important;
+          }
+          .plant-assistant-cloud span {
+            width: 54px !important;
+            height: 44px !important;
+            font-size: 1.5rem !important;
+          }
+        }
+        .highlight-bounce {
+          animation: bounce-highlight 1.6s infinite cubic-bezier(.68,-0.55,.27,1.55);
+        }
+        @keyframes bounce-highlight {
+          0%, 100% { transform: translateY(0); }
+          20% { transform: translateY(-8px); }
+          40% { transform: translateY(0); }
+          60% { transform: translateY(-4px); }
+          80% { transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

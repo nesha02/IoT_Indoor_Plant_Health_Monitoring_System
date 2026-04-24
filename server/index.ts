@@ -8,7 +8,7 @@ import { MongoClient } from "mongodb";
 // ─────────────────────────────────────────────
 
 const uri =
-  "mongodb+srv://team_user:team12345@cluster0.khlfwda.mongodb.net/?retryWrites=true&w=majority";
+  process.env.MONGODB_URI || "mongodb+srv://team_user:team12345@cluster0.khlfwda.mongodb.net/?retryWrites=true&w=majority";
 
 const client = new MongoClient(uri);
 let sensorCollection: any;
