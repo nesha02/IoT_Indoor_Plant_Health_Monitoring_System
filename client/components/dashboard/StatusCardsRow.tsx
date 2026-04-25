@@ -2,6 +2,7 @@ import StatusCard from "@/components/dashboard/StatusCard";
 import MoistureCard from "@/components/dashboard/MoistureCard";
 import { Cloud, Droplets, Thermometer, Wind } from "lucide-react";
 
+
 interface StatusCardsRowProps {
   data: {
     moisture: number;
@@ -11,14 +12,19 @@ interface StatusCardsRowProps {
     pumpStatus: string;
     lastWatered: string;
     lastWaterAmount: number;
-    todayWaterTotal: number;
+    todayWaterTotal?: number;
+  };
+  thresholds: {
+    dry: number;
+    safe: number;
+    overwet: number;
   };
 }
 
-export default function StatusCardsRow({ data }: StatusCardsRowProps) {
+export default function StatusCardsRow({ data, thresholds }: StatusCardsRowProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <MoistureCard moisture={data.moisture} />
+      <MoistureCard moisture={data.moisture} thresholds={thresholds} />
 
       <StatusCard
         title="Light Intensity"
@@ -48,7 +54,7 @@ export default function StatusCardsRow({ data }: StatusCardsRowProps) {
       <StatusCard
         title="Water Delivered"
         value={`${data.lastWaterAmount} mL`}
-        subtitle={`Today Total: ${data.todayWaterTotal} mL`}
+        subtitle={`Today Total: ${data.todayWaterTotal ?? 0} mL`}
         icon={<Droplets className="w-6 h-6 text-sensor-water" />}
       />
     </div>

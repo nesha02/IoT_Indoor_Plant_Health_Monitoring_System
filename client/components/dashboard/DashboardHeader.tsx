@@ -15,13 +15,16 @@ interface DashboardHeaderProps {
     PLANT_03: { name: string };
   };
   lastUpdate: string;
+  thresholds?: { dry: number; safe: number; overwet: number };
+  lastWatered?: string;
 }
-
 export default function DashboardHeader({
   selectedPlant,
   onPlantChange,
   plants,
   lastUpdate,
+  thresholds,
+  lastWatered
 }: DashboardHeaderProps) {
   return (
     <header className="bg-ui-bg-card border-b border-ui-border">
@@ -33,10 +36,14 @@ export default function DashboardHeader({
             </h1>
             <div className="text-sm text-ui-text-secondary">
               <p className="mb-2">
-                Plant Moisture Profile: Dry &lt; 45% | Safe 50–80% | Over-wet
-                &gt; 85%
+                Plant Moisture Profile:
+                {thresholds
+                  ? ` Dry < ${thresholds.dry}% | Safe ${thresholds.dry}–${thresholds.overwet}% | Over-wet > ${thresholds.overwet}%`
+                  : " Dry < 45% | Safe 50–80% | Over-wet > 85%"}
               </p>
-              <p>Last Updated: {lastUpdate}</p>
+              <p>
+                Last Watered: {lastWatered || "-"}
+              </p>
             </div>
           </div>
 
@@ -55,10 +62,10 @@ export default function DashboardHeader({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="PLANT_01">
-                  PLANT_01 (Snake Plant)
+                  PLANT_01 (Money Plant)
                 </SelectItem>
                 <SelectItem value="PLANT_02">
-                  PLANT_02 (Money Plant)
+                  PLANT_02 (Snake Plant)
                 </SelectItem>
                 <SelectItem value="PLANT_03">PLANT_03 (Cactus)</SelectItem>
               </SelectContent>

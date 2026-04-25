@@ -12,19 +12,18 @@ interface AlertsAndInsightsProps {
   };
 }
 
-export default function AlertsAndInsights({
-  data,
-}: AlertsAndInsightsProps) {
+export default function AlertsAndInsights({ data }: AlertsAndInsightsProps) {
+  const alerts = data?.alerts ?? [];
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Alerts Panel */}
       <div className="rounded-lg border border-ui-border bg-ui-bg-card p-6">
         <h2 className="text-lg font-bold text-ui-text-primary mb-4">Alerts</h2>
         <div className="space-y-3">
-          {data.alerts.length === 0 ? (
+          {alerts.length === 0 ? (
             <div className="text-ui-text-muted">No alerts configured.</div>
           ) : (
-            data.alerts.map((alert, index) => (
+            alerts.map((alert, index) => (
               <div
                 key={index}
                 className={`p-3 rounded-md border flex items-start gap-3 shadow-lg

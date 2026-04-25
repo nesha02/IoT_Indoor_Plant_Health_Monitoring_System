@@ -301,8 +301,13 @@ export function createServer() {
       const latestEvent = eventData[0] ?? null;
       const predictionRaw: number = latestEvent?.prediction ?? 0;
 
+
       // Correct: TinyML outputs float — >0.5 means water needed
-      const prediction = predictionRaw > 0.5 ? "Water Needed" : "No Water Needed";
+      let prediction = predictionRaw > 0.5 ? "Water Needed" : "No Water Needed";
+      // OVERRIDE: If soil is above overwet threshold, never water
+      if (soil > thresholds.overwet) {
+        prediction = "No Water Needed";
+      }
 
       // The raw prediction float IS the confidence (0.9821 = 98.21% confident)
       const confidence = latestEvent
@@ -318,6 +323,13 @@ export function createServer() {
         .limit(20)
         .toArray();
 
+
+      // Plant-type-based fallback intervals (in days)
+      const fallbackDays: Record<string, number> = {
+        money_plant: 2,
+        snake_plant: 4,
+        cactus: 7,
+      };
       let estimatedNextWatering: string | null = null;
 
       if (recentData.length >= 2) {
@@ -338,6 +350,12 @@ export function createServer() {
             Date.now() + minsUntilDry * 60000
           ).toISOString();
         }
+      }
+
+      // Fallback: always provide a value if null
+      if (!estimatedNextWatering) {
+        const fallback = fallbackDays[plantType] || 3;
+        estimatedNextWatering = new Date(Date.now() + fallback * 24 * 60 * 60 * 1000).toISOString();
       }
 
       // Dynamic insight text

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import StatusCardsRow from "@/components/dashboard/StatusCardsRow";
 import MoistureChartRow from "@/components/dashboard/MoistureChartRow";
@@ -12,6 +12,14 @@ export default function Index() {
     "PLANT_01" | "PLANT_02" | "PLANT_03"
   >("PLANT_01");
   const [plantData, setPlantData] = useState<any>(null);
+  // Cache for estimated next watering time
+  const cachedNextWateringRef = useRef<string | null>(null);
+  // For live countdown
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 60000); // update every minute
+    return () => clearInterval(interval);
+  }, []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,13 +29,16 @@ export default function Index() {
   const { toast } = useToast();
 
   // Map dashboard plant keys to API plant IDs
+  // Correct mapping: plant1 = Money Plant, plant2 = Snake Plant, plant3 = Cactus
   const plantIdMap: Record<string, string> = {
-    PLANT_01: "plant1",
-    PLANT_02: "plant2",
-    PLANT_03: "plant3",
+    PLANT_01: "plant1", // Money Plant
+    PLANT_02: "plant2", // Snake Plant
+    PLANT_03: "plant3", // Cactus
   };
 
+  // Fetch all data once on mount or plant change
   useEffect(() => {
+    let isMounted = true;
     async function fetchAllPlantData() {
       setLoading(true);
       setError(null);
@@ -48,7 +59,13 @@ export default function Index() {
           analyticsRes.json(),
           waterRes.json(),
         ]);
-
+        if (!isMounted) return;
+        // Cache logic for estimated next watering
+        if (analytics.estimated_next_watering) {
+          if (cachedNextWateringRef.current !== analytics.estimated_next_watering) {
+            cachedNextWateringRef.current = analytics.estimated_next_watering;
+          }
+        }
         setPlantData({
           // Live
           moisture: live.soil_pct,
@@ -56,38 +73,42 @@ export default function Index() {
           temperature: live.temperature,
           humidity: live.humidity,
           pumpStatus: live.pump_status,
-          lastWatered: live.last_updated ? new Date(live.last_updated).toLocaleTimeString() : "-",
+          lastWatered: water.last_event?.timestamp
+            ? new Date(water.last_event.timestamp).toISOString().replace('T', ' ').substring(0, 19)
+            : "-",
           lastWaterAmount: live.water_delivered,
+          todayWaterTotal: water.today_total ?? 0,
           lastUpdate: live.last_updated ? new Date(live.last_updated).toLocaleTimeString() : "-",
+          thresholds: live.thresholds,
           // History for chart
           moistureHistory: history.history.map((d: any) => ({
             time: new Date(d.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             value: d.soil,
           })),
-          // Force the dry alert to be active for demo/testing
+          // Alerts based on thresholds
           alerts: [
             {
               type: "dry",
-              message: "Dry soil – watering required",
-              active: true, // <-- Always show this alert
+              message: `Dry soil – watering required (below ${live.thresholds.dry}%)`,
+              active: live.soil_pct < live.thresholds.dry,
             },
             {
               type: "over",
-              message: "Over-watering risk",
-              active: false,
+              message: `Over-watering risk (above ${live.thresholds.overwet}%)`,
+              active: live.soil_pct > live.thresholds.overwet,
             },
             {
               type: "sensor",
               message: "Sensor offline",
-              active: false,
+              active: live.is_valid === false,
             },
           ],
           // ML Insights
           mlInsights: {
             wateringRequired: analytics.prediction === "Water Needed",
             confidence: Math.round((analytics.confidence ?? 0) * 100),
-            nextWateringTime: analytics.estimated_next_watering
-              ? new Date(analytics.estimated_next_watering).toLocaleString()
+            nextWateringTime: cachedNextWateringRef.current
+              ? new Date(cachedNextWateringRef.current).toISOString().replace('T', ' ').substring(0, 19) + ' UTC'
               : "Unknown",
             insight: analytics.insight,
           },
@@ -107,12 +128,125 @@ export default function Index() {
           },
         });
       } catch (err: any) {
+        if (!isMounted) return;
         setError(err.message || "Unknown error");
       } finally {
+        if (!isMounted) return;
         setLoading(false);
       }
     }
     fetchAllPlantData();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedPlant]);
+
+  // Poll only the data every 3 seconds (live, history, analytics, water-analytics)
+  useEffect(() => {
+    let isMounted = true;
+    let interval: NodeJS.Timeout;
+    async function pollPlantData() {
+      try {
+        const id = plantIdMap[selectedPlant];
+        const [liveRes, historyRes, analyticsRes, waterRes] = await Promise.all([
+          fetch(`/api/plant/${id}/live`),
+          fetch(`/api/plant/${id}/history`),
+          fetch(`/api/plant/${id}/analytics`),
+          fetch(`/api/plant/${id}/water-analytics`),
+        ]);
+        if (!liveRes.ok || !historyRes.ok || !analyticsRes.ok || !waterRes.ok) {
+          throw new Error("Failed to fetch one or more endpoints");
+        }
+        const [live, history, analytics, water] = await Promise.all([
+          liveRes.json(),
+          historyRes.json(),
+          analyticsRes.json(),
+          waterRes.json(),
+        ]);
+        if (!isMounted) return;
+        // Cache logic for estimated next watering in polling
+        if (analytics.estimated_next_watering) {
+          if (cachedNextWateringRef.current !== analytics.estimated_next_watering) {
+            cachedNextWateringRef.current = analytics.estimated_next_watering;
+          }
+        }
+        setPlantData(prev => prev ? {
+          ...prev,
+          // Live
+          moisture: live.soil_pct,
+          light: live.light,
+          temperature: live.temperature,
+          humidity: live.humidity,
+          pumpStatus: live.pump_status,
+          lastWatered: water.last_event?.timestamp
+            ? new Date(water.last_event.timestamp).toISOString().replace('T', ' ').substring(0, 19)
+            : "-",
+          lastWaterAmount: live.water_delivered,
+          todayWaterTotal: water.today_total ?? 0,
+          lastUpdate: live.last_updated ? new Date(live.last_updated).toLocaleTimeString() : "-",
+          thresholds: live.thresholds,
+          // History for chart
+          moistureHistory: history.history.map((d: any) => ({
+            time: new Date(d.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            value: d.soil,
+          })),
+          // Alerts based on thresholds
+          alerts: [
+            {
+              type: "dry",
+              message: `Dry soil – watering required (below ${live.thresholds.dry}%)`,
+              active: live.soil_pct < live.thresholds.dry,
+            },
+            {
+              type: "over",
+              message: `Over-watering risk (above ${live.thresholds.overwet}%)`,
+              active: live.soil_pct > live.thresholds.overwet,
+            },
+            {
+              type: "sensor",
+              message: "Sensor offline",
+              active: live.is_valid === false,
+            },
+          ],
+          // ML Insights
+          mlInsights: {
+            wateringRequired: analytics.prediction === "Water Needed",
+            confidence: Math.round((analytics.confidence ?? 0) * 100),
+            nextWateringTime: (() => {
+              if (!cachedNextWateringRef.current) return "Unknown";
+              const target = new Date(cachedNextWateringRef.current);
+              const diffMs = target.getTime() - now;
+              const diffHrs = Math.max(0, diffMs / (1000 * 60 * 60));
+              const hours = Math.floor(diffHrs);
+              const minutes = Math.floor((diffHrs - hours) * 60);
+              return `${target.toISOString().replace('T', ' ').substring(0, 19)} UTC (in ${hours}h ${minutes}m)`;
+            })(),
+            insight: analytics.insight,
+          },
+          // Advanced Analytics (always update with latest backend data)
+          irrigationImpact: {
+            amount: water.last_event?.water_delivered ?? 0,
+            previousMoisture: water.last_event?.soil_before ?? 0,
+            currentMoisture: water.last_event?.soil_after ?? 0,
+            moistureIncrease:
+              (water.last_event?.soil_after ?? 0) -
+              (water.last_event?.soil_before ?? 0),
+          },
+          analytics: {
+            dropRate: analytics.drop_rate ?? 0,
+            avgWaterPerEvent: water.avg_water_per_event ?? 0,
+            weeklyUsage: water.weekly_total ?? 0,
+          },
+        } : prev);
+      } catch (err: any) {
+        // Ignore polling errors, don't set error state
+      }
+    }
+    interval = setInterval(pollPlantData, 3000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [selectedPlant]);
 
   // Show popup for each active alert, with color and top-center position
@@ -120,19 +254,39 @@ export default function Index() {
     if (!plantData) return;
     plantData.alerts?.forEach((alert: any) => {
       if (alert.active) {
+        let bg = '#f87171', fg = '#fff';
+        if (alert.type === 'dry') { bg = '#f87171'; fg = '#fff'; }
+        if (alert.type === 'over') { bg = '#38bdf8'; fg = '#fff'; }
+        if (alert.type === 'sensor') { bg = '#fbbf24'; fg = '#222'; }
+        if (alert.type === 'safe') { bg = '#bbf7d0'; fg = '#166534'; }
         toast({
-          title: "Plant Alert",
+          title: alert.type === 'safe' ? 'All Good!' : 'Plant Alert',
           description: alert.message,
           style: {
-            backgroundColor: '#f87171', // red-400
-            color: '#fff',
+            backgroundColor: bg,
+            color: fg,
             fontWeight: 'bold',
             textAlign: 'center',
           },
-          position: 'top-center', // If your toast system supports this
+          position: 'top-center',
         });
       }
     });
+
+    // Show a green notification for Safe status
+    if (plantData.thresholds && plantData.moisture >= plantData.thresholds.dry && plantData.moisture <= plantData.thresholds.overwet) {
+      toast({
+        title: 'All Good!',
+        description: `Soil moisture is in the safe range (${plantData.moisture.toFixed(1)}%).`,
+        style: {
+          backgroundColor: '#bbf7d0',
+          color: '#166534',
+          fontWeight: 'bold',
+          textAlign: 'center',
+        },
+        position: 'top-center',
+      });
+    }
   }, [plantData, toast]);
 
   return (
@@ -144,11 +298,13 @@ export default function Index() {
         selectedPlant={selectedPlant}
         onPlantChange={setSelectedPlant}
         plants={{
-          PLANT_01: { name: "Snake Plant" },
-          PLANT_02: { name: "Money Plant" },
+          PLANT_01: { name: "Money Plant" },
+          PLANT_02: { name: "Snake Plant" },
           PLANT_03: { name: "Cactus" },
         }}
         lastUpdate={plantData?.lastUpdate || "-"}
+        thresholds={plantData?.thresholds}
+        lastWatered={plantData?.lastWatered}
       />
 
       <main className="container mx-auto px-4 py-8 space-y-8">
@@ -158,7 +314,10 @@ export default function Index() {
           <div className="text-red-500">{error}</div>
         ) : plantData ? (
           <>
-            <StatusCardsRow data={plantData} />
+            <StatusCardsRow data={{
+              ...plantData,
+              lastWatered: plantData.lastWatered // Pass correct last watered time to Pump Status card
+            }} thresholds={plantData.thresholds} />
             <MoistureChartRow data={plantData} />
             <AlertsAndInsights data={plantData} />
             <AdvancedAnalytics data={plantData} />
