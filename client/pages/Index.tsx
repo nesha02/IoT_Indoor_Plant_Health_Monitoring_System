@@ -23,7 +23,7 @@ export default function Index() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-    // Controls the chatbot open/close from the header button
+  // Controls the chatbot open/close from the header button
   const [chatbotOpen, setChatbotOpen] = useState(false);
 
   const { toast } = useToast();
@@ -44,14 +44,21 @@ export default function Index() {
       setError(null);
       try {
         const id = plantIdMap[selectedPlant];
-        const [liveRes, historyRes, analyticsRes, waterRes, dropRateRes] = await Promise.all([
-          fetch(`/api/plant/${id}/live`),
-          fetch(`/api/plant/${id}/history`),
-          fetch(`/api/plant/${id}/analytics`),
-          fetch(`/api/plant/${id}/water-analytics`),
-          fetch(`/api/plant/${id}/drop-rate`),
-        ]);
-        if (!liveRes.ok || !historyRes.ok || !analyticsRes.ok || !waterRes.ok || !dropRateRes.ok) {
+        const [liveRes, historyRes, analyticsRes, waterRes, dropRateRes] =
+          await Promise.all([
+            fetch(`/api/plant/${id}/live`),
+            fetch(`/api/plant/${id}/history`),
+            fetch(`/api/plant/${id}/analytics`),
+            fetch(`/api/plant/${id}/water-analytics`),
+            fetch(`/api/plant/${id}/drop-rate`),
+          ]);
+        if (
+          !liveRes.ok ||
+          !historyRes.ok ||
+          !analyticsRes.ok ||
+          !waterRes.ok ||
+          !dropRateRes.ok
+        ) {
           throw new Error("Failed to fetch one or more endpoints");
         }
         const [live, history, analytics, water, dropRate] = await Promise.all([
@@ -64,7 +71,9 @@ export default function Index() {
         if (!isMounted) return;
         // Cache logic for estimated next watering
         if (analytics.estimated_next_watering) {
-          if (cachedNextWateringRef.current !== analytics.estimated_next_watering) {
+          if (
+            cachedNextWateringRef.current !== analytics.estimated_next_watering
+          ) {
             cachedNextWateringRef.current = analytics.estimated_next_watering;
           }
         }
@@ -76,15 +85,23 @@ export default function Index() {
           humidity: live.humidity,
           pumpStatus: live.pump_status,
           lastWatered: water.last_event?.timestamp
-            ? new Date(water.last_event.timestamp).toISOString().replace('T', ' ').substring(0, 19)
+            ? new Date(water.last_event.timestamp)
+                .toISOString()
+                .replace("T", " ")
+                .substring(0, 19)
             : "-",
           lastWaterAmount: live.water_delivered,
           todayWaterTotal: water.today_total ?? 0,
-          lastUpdate: live.last_updated ? new Date(live.last_updated).toLocaleTimeString() : "-",
+          lastUpdate: live.last_updated
+            ? new Date(live.last_updated).toLocaleTimeString()
+            : "-",
           thresholds: live.thresholds,
           // History for chart
           moistureHistory: history.history.map((d: any) => ({
-            time: new Date(d.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            time: new Date(d.time).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
             value: d.soil,
           })),
           // Alerts based on thresholds
@@ -110,7 +127,10 @@ export default function Index() {
             wateringRequired: analytics.prediction === "Water Needed",
             confidence: Math.round((analytics.confidence ?? 0) * 100),
             nextWateringTime: cachedNextWateringRef.current
-              ? new Date(cachedNextWateringRef.current).toISOString().replace('T', ' ').substring(0, 19) + ' UTC'
+              ? new Date(cachedNextWateringRef.current)
+                  .toISOString()
+                  .replace("T", " ")
+                  .substring(0, 19) + " UTC"
               : "Unknown",
             insight: analytics.insight,
           },
@@ -125,7 +145,7 @@ export default function Index() {
           },
           analytics: {
             dropRate: dropRate.drop_rate ?? 0,
-            dropRateUnit: dropRate.unit ?? '% drop per hour',
+            dropRateUnit: dropRate.unit ?? "% drop per hour",
             avgWaterPerEvent: water.avg_water_per_event ?? 0,
             weeklyUsage: water.weekly_total ?? 0,
           },
@@ -151,14 +171,21 @@ export default function Index() {
     async function pollPlantData() {
       try {
         const id = plantIdMap[selectedPlant];
-        const [liveRes, historyRes, analyticsRes, waterRes, dropRateRes] = await Promise.all([
-          fetch(`/api/plant/${id}/live`),
-          fetch(`/api/plant/${id}/history`),
-          fetch(`/api/plant/${id}/analytics`),
-          fetch(`/api/plant/${id}/water-analytics`),
-          fetch(`/api/plant/${id}/drop-rate`),
-        ]);
-        if (!liveRes.ok || !historyRes.ok || !analyticsRes.ok || !waterRes.ok || !dropRateRes.ok) {
+        const [liveRes, historyRes, analyticsRes, waterRes, dropRateRes] =
+          await Promise.all([
+            fetch(`/api/plant/${id}/live`),
+            fetch(`/api/plant/${id}/history`),
+            fetch(`/api/plant/${id}/analytics`),
+            fetch(`/api/plant/${id}/water-analytics`),
+            fetch(`/api/plant/${id}/drop-rate`),
+          ]);
+        if (
+          !liveRes.ok ||
+          !historyRes.ok ||
+          !analyticsRes.ok ||
+          !waterRes.ok ||
+          !dropRateRes.ok
+        ) {
           throw new Error("Failed to fetch one or more endpoints");
         }
         const [live, history, analytics, water, dropRate] = await Promise.all([
@@ -171,79 +198,93 @@ export default function Index() {
         if (!isMounted) return;
         // Cache logic for estimated next watering in polling
         if (analytics.estimated_next_watering) {
-          if (cachedNextWateringRef.current !== analytics.estimated_next_watering) {
+          if (
+            cachedNextWateringRef.current !== analytics.estimated_next_watering
+          ) {
             cachedNextWateringRef.current = analytics.estimated_next_watering;
           }
         }
-        setPlantData(prev => prev ? {
-          ...prev,
-          // Live
-          moisture: live.soil_pct,
-          light: live.light,
-          temperature: live.temperature,
-          humidity: live.humidity,
-          pumpStatus: live.pump_status,
-          lastWatered: water.last_event?.timestamp
-            ? new Date(water.last_event.timestamp).toISOString().replace('T', ' ').substring(0, 19)
-            : "-",
-          lastWaterAmount: live.water_delivered,
-          todayWaterTotal: water.today_total ?? 0,
-          lastUpdate: live.last_updated ? new Date(live.last_updated).toLocaleTimeString() : "-",
-          thresholds: live.thresholds,
-          // History for chart
-          moistureHistory: history.history.map((d: any) => ({
-            time: new Date(d.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            value: d.soil,
-          })),
-          // Alerts based on thresholds
-          alerts: [
-            {
-              type: "dry",
-              message: `Dry soil – watering required (below ${live.thresholds.dry}%)`,
-              active: live.soil_pct < live.thresholds.dry,
-            },
-            {
-              type: "over",
-              message: `Over-watering risk (above ${live.thresholds.overwet}%)`,
-              active: live.soil_pct > live.thresholds.overwet,
-            },
-            {
-              type: "sensor",
-              message: "Sensor offline",
-              active: live.is_valid === false,
-            },
-          ],
-          // ML Insights
-          mlInsights: {
-            wateringRequired: analytics.prediction === "Water Needed",
-            confidence: Math.round((analytics.confidence ?? 0) * 100),
-            nextWateringTime: (() => {
-              if (!cachedNextWateringRef.current) return "Unknown";
-              const target = new Date(cachedNextWateringRef.current);
-              const diffMs = target.getTime() - now;
-              const diffHrs = Math.max(0, diffMs / (1000 * 60 * 60));
-              const hours = Math.floor(diffHrs);
-              const minutes = Math.floor((diffHrs - hours) * 60);
-              return `${target.toISOString().replace('T', ' ').substring(0, 19)} UTC (in ${hours}h ${minutes}m)`;
-            })(),
-            insight: analytics.insight,
-          },
-          // Advanced Analytics (always update with latest backend data)
-          irrigationImpact: {
-            amount: water.last_event?.water_delivered ?? 0,
-            previousMoisture: water.last_event?.soil_before ?? 0,
-            currentMoisture: water.last_event?.soil_after ?? 0,
-            moistureIncrease:
-              (water.last_event?.soil_after ?? 0) -
-              (water.last_event?.soil_before ?? 0),
-          },
-          analytics: {
-            dropRate: dropRate.drop_rate ?? 0,
-            dropRateUnit: dropRate.unit ?? '% drop per hour',
-            avgWaterPerEvent: water.avg_water_per_event ?? 0,
-            weeklyUsage: water.weekly_total ?? 0,
-          },
-        } : prev);
+        setPlantData((prev) =>
+          prev
+            ? {
+                ...prev,
+                // Live
+                moisture: live.soil_pct,
+                light: live.light,
+                temperature: live.temperature,
+                humidity: live.humidity,
+                pumpStatus: live.pump_status,
+                lastWatered: water.last_event?.timestamp
+                  ? new Date(water.last_event.timestamp)
+                      .toISOString()
+                      .replace("T", " ")
+                      .substring(0, 19)
+                  : "-",
+                lastWaterAmount: live.water_delivered,
+                todayWaterTotal: water.today_total ?? 0,
+                lastUpdate: live.last_updated
+                  ? new Date(live.last_updated).toLocaleTimeString()
+                  : "-",
+                thresholds: live.thresholds,
+                // History for chart
+                moistureHistory: history.history.map((d: any) => ({
+                  time: new Date(d.time).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }),
+                  value: d.soil,
+                })),
+                // Alerts based on thresholds
+                alerts: [
+                  {
+                    type: "dry",
+                    message: `Dry soil – watering required (below ${live.thresholds.dry}%)`,
+                    active: live.soil_pct < live.thresholds.dry,
+                  },
+                  {
+                    type: "over",
+                    message: `Over-watering risk (above ${live.thresholds.overwet}%)`,
+                    active: live.soil_pct > live.thresholds.overwet,
+                  },
+                  {
+                    type: "sensor",
+                    message: "Sensor offline",
+                    active: live.is_valid === false,
+                  },
+                ],
+                // ML Insights
+                mlInsights: {
+                  wateringRequired: analytics.prediction === "Water Needed",
+                  confidence: Math.round((analytics.confidence ?? 0) * 100),
+                  nextWateringTime: (() => {
+                    if (!cachedNextWateringRef.current) return "Unknown";
+                    const target = new Date(cachedNextWateringRef.current);
+                    const diffMs = target.getTime() - now;
+                    const diffHrs = Math.max(0, diffMs / (1000 * 60 * 60));
+                    const hours = Math.floor(diffHrs);
+                    const minutes = Math.floor((diffHrs - hours) * 60);
+                    return `${target.toISOString().replace("T", " ").substring(0, 19)} UTC (in ${hours}h ${minutes}m)`;
+                  })(),
+                  insight: analytics.insight,
+                },
+                // Advanced Analytics (always update with latest backend data)
+                irrigationImpact: {
+                  amount: water.last_event?.water_delivered ?? 0,
+                  previousMoisture: water.last_event?.soil_before ?? 0,
+                  currentMoisture: water.last_event?.soil_after ?? 0,
+                  moistureIncrease:
+                    (water.last_event?.soil_after ?? 0) -
+                    (water.last_event?.soil_before ?? 0),
+                },
+                analytics: {
+                  dropRate: dropRate.drop_rate ?? 0,
+                  dropRateUnit: dropRate.unit ?? "% drop per hour",
+                  avgWaterPerEvent: water.avg_water_per_event ?? 0,
+                  weeklyUsage: water.weekly_total ?? 0,
+                },
+              }
+            : prev,
+        );
       } catch (err: any) {
         // Ignore polling errors, don't set error state
       }
@@ -260,45 +301,60 @@ export default function Index() {
     if (!plantData) return;
     plantData.alerts?.forEach((alert: any) => {
       if (alert.active) {
-        let bg = '#f87171', fg = '#fff';
-        if (alert.type === 'dry') { bg = '#f87171'; fg = '#fff'; }
-        if (alert.type === 'over') { bg = '#38bdf8'; fg = '#fff'; }
-        if (alert.type === 'sensor') { bg = '#fbbf24'; fg = '#222'; }
-        if (alert.type === 'safe') { bg = '#bbf7d0'; fg = '#166534'; }
+        let bg = "#f87171",
+          fg = "#fff";
+        if (alert.type === "dry") {
+          bg = "#f87171";
+          fg = "#fff";
+        }
+        if (alert.type === "over") {
+          bg = "#38bdf8";
+          fg = "#fff";
+        }
+        if (alert.type === "sensor") {
+          bg = "#fbbf24";
+          fg = "#222";
+        }
+        if (alert.type === "safe") {
+          bg = "#bbf7d0";
+          fg = "#166534";
+        }
         toast({
-          title: alert.type === 'safe' ? 'All Good!' : 'Plant Alert',
+          title: alert.type === "safe" ? "All Good!" : "Plant Alert",
           description: alert.message,
           style: {
             backgroundColor: bg,
             color: fg,
-            fontWeight: 'bold',
-            textAlign: 'center',
+            fontWeight: "bold",
+            textAlign: "center",
           },
-          position: 'top-center',
+          position: "top-center",
         });
       }
     });
 
     // Show a green notification for Safe status
-    if (plantData.thresholds && plantData.moisture >= plantData.thresholds.dry && plantData.moisture <= plantData.thresholds.overwet) {
+    if (
+      plantData.thresholds &&
+      plantData.moisture >= plantData.thresholds.dry &&
+      plantData.moisture <= plantData.thresholds.overwet
+    ) {
       toast({
-        title: 'All Good!',
+        title: "All Good!",
         description: `Soil moisture is in the safe range (${plantData.moisture.toFixed(1)}%).`,
         style: {
-          backgroundColor: '#bbf7d0',
-          color: '#166534',
-          fontWeight: 'bold',
-          textAlign: 'center',
+          backgroundColor: "#bbf7d0",
+          color: "#166534",
+          fontWeight: "bold",
+          textAlign: "center",
         },
-        position: 'top-center',
+        position: "top-center",
       });
     }
   }, [plantData, toast]);
 
   return (
     <div className="min-h-screen bg-ui-bg-main">
-
-
       {/* ── Header row ── */}
       <DashboardHeader
         selectedPlant={selectedPlant}
@@ -320,10 +376,13 @@ export default function Index() {
           <div className="text-red-500">{error}</div>
         ) : plantData ? (
           <>
-            <StatusCardsRow data={{
-              ...plantData,
-              lastWatered: plantData.lastWatered // Pass correct last watered time to Pump Status card
-            }} thresholds={plantData.thresholds} />
+            <StatusCardsRow
+              data={{
+                ...plantData,
+                lastWatered: plantData.lastWatered, // Pass correct last watered time to Pump Status card
+              }}
+              thresholds={plantData.thresholds}
+            />
             <MoistureChartRow data={plantData} />
             <AlertsAndInsights data={plantData} />
             <AdvancedAnalytics data={plantData} />
@@ -363,22 +422,36 @@ export default function Index() {
             boxShadow: chatbotOpen
               ? "0 0 24px 8px #4ade80, 0 6px 24px rgba(22,163,74,0.18)"
               : "0 0 18px 4px #a7f3d0, 0 6px 24px rgba(22,163,74,0.10)",
-            border: chatbotOpen
-              ? "2.5px solid #16a34a"
-              : "2.5px solid #a7f3d0",
+            border: chatbotOpen ? "2.5px solid #16a34a" : "2.5px solid #a7f3d0",
             transition: "all 0.2s cubic-bezier(.4,0,.2,1)",
             position: "relative",
           }}
         >
-          <span style={{ fontSize: "2.2rem", marginRight: "-2px", filter: chatbotOpen ? "drop-shadow(0 0 8px #4ade80)" : "drop-shadow(0 0 4px #a7f3d0)" }}>☁️</span>
-          <span style={{
-            position: "absolute",
-            fontSize: "1.7rem",
-            marginLeft: "-36px",
-            marginTop: "12px",
-            pointerEvents: "none",
-            filter: chatbotOpen ? "drop-shadow(0 0 8px #4ade80)" : "drop-shadow(0 0 4px #a7f3d0)"
-          }}>🌿</span>
+          <span
+            style={{
+              fontSize: "2.2rem",
+              marginRight: "-2px",
+              filter: chatbotOpen
+                ? "drop-shadow(0 0 8px #4ade80)"
+                : "drop-shadow(0 0 4px #a7f3d0)",
+            }}
+          >
+            ☁️
+          </span>
+          <span
+            style={{
+              position: "absolute",
+              fontSize: "1.7rem",
+              marginLeft: "-36px",
+              marginTop: "12px",
+              pointerEvents: "none",
+              filter: chatbotOpen
+                ? "drop-shadow(0 0 8px #4ade80)"
+                : "drop-shadow(0 0 4px #a7f3d0)",
+            }}
+          >
+            🌿
+          </span>
         </span>
       </button>
 
