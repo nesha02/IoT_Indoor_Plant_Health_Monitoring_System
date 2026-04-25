@@ -1,9 +1,13 @@
 import "dotenv/config";
 import express from "express";
+// In-memory cache for next watering estimation (per plant)
+const nextWateringCache: Record<string, { soil: number; estimate: string; expires: number }> = {};
 import cors from "cors";
 import { MongoClient } from "mongodb";
 
-// ─────────────────────────────────────────────
+  // ─────────────────────────────────────────────
+  // Pump flow rate constant (ml/sec)
+  const PUMP_FLOW_RATE_ML_PER_SEC = 117;
 //  DATABASE SETUP
 // ─────────────────────────────────────────────
 
@@ -101,7 +105,6 @@ export function createServer() {
       const sensorData = await sensorCollection
         .find()
         .sort({ timestamp: -1 })
-        .limit(1)
         .toArray();
 
       if (!sensorData.length) {
@@ -113,24 +116,28 @@ export function createServer() {
       const soil = getSoil(latest, id);
       const thresholds = getThresholds(plantType);
 
+
       // pump_status and water_delivered come from watering_events, NOT sensor_data
       // ESP32 publishes watering event AFTER pump turns off, so "ON" means recently active
       const wateringData = await wateringCollection
         .find({ plant_id: id })
         .sort({ timestamp: -1 })
-        .limit(1)
         .toArray();
 
       const latestWatering = wateringData[0] ?? null;
 
-      // "ON" = watering event occurred within last 2 minutes
+      // "ON" = watering event occurred within last 10 seconds
       let pumpStatus = "OFF";
       if (latestWatering) {
-        const diffMinutes =
-          (Date.now() - new Date(latestWatering.timestamp).getTime()) / 60000;
-        if (diffMinutes < 2) pumpStatus = "ON";
+        const diffSeconds = (Date.now() - new Date(latestWatering.timestamp).getTime()) / 1000;
+        if (diffSeconds < 10) pumpStatus = "ON";
       }
 
+      // Compute water delivered in ml for the latest watering event
+      let waterDeliveredMl = 0;
+      if (latestWatering && typeof latestWatering.duration_sec === 'number') {
+        waterDeliveredMl = latestWatering.duration_sec * PUMP_FLOW_RATE_ML_PER_SEC;
+      }
       res.json({
         plant_id: id,
         plant_type: plantType,
@@ -140,7 +147,7 @@ export function createServer() {
         light: latest.light ?? null,
         is_valid: latest.is_valid ?? true,
         pump_status: pumpStatus,
-        water_delivered: latestWatering?.impact_gain ?? 0,
+        water_delivered: waterDeliveredMl,
         last_updated: latest.timestamp,
         // Thresholds for colored moisture bar
         thresholds: {
@@ -168,7 +175,6 @@ export function createServer() {
       const sensorData = await sensorCollection
         .find()
         .sort({ timestamp: 1 })
-        .limit(100)
         .toArray();
 
       if (!sensorData.length) {
@@ -189,11 +195,12 @@ export function createServer() {
         .sort({ timestamp: 1 })
         .toArray();
 
+      // Compute water delivered in ml for each watering event
       const wateringMarkers = wateringEvents.map((e: any) => ({
         time: e.timestamp,
         soil_before: e.soil_before,
         soil_after: e.soil_after,
-        impact_gain: e.impact_gain,
+        water_delivered: (typeof e.duration_sec === 'number' ? e.duration_sec * PUMP_FLOW_RATE_ML_PER_SEC : 0),
       }));
 
       res.json({
@@ -219,39 +226,56 @@ export function createServer() {
   //  GET /api/plant/:id/drop-rate
   // ─────────────────────────────────────────
 
+
+  // ── MOISTURE DROP RATE ENDPOINT ──
   app.get("/api/plant/:id/drop-rate", async (req, res) => {
     try {
       const id = req.params.id;
 
-      const data = await sensorCollection
-        .find()
+      // 1. Try to get all readings from the last 2 days
+      const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+      let data = await sensorCollection
+        .find({ timestamp: { $gte: twoDaysAgo } })
         .sort({ timestamp: 1 })
-        .limit(50)
         .toArray();
 
+      // 2. Fallback: If fewer than 2 readings, use all available data
       if (data.length < 2) {
-        return res.json({ drop_rate: 0, unit: "% per minute" });
+        data = await sensorCollection
+          .find()
+          .sort({ timestamp: 1 })
+          .toArray();
       }
 
+      // 3. If still not enough data, return 0
+      if (data.length < 2) {
+        return res.json({ drop_rate: 0, unit: "% per hour", reason: "Insufficient data" });
+      }
+
+      // 4. Use the correct plant's soil value for both endpoints
       const firstSoil = getSoil(data[0], id);
       const lastSoil = getSoil(data[data.length - 1], id);
-
-      // Divide by actual elapsed time in minutes (not document count)
       const firstTime = new Date(data[0].timestamp).getTime();
       const lastTime = new Date(data[data.length - 1].timestamp).getTime();
-      const timeDiffMinutes = (lastTime - firstTime) / 60000;
+      const timeDiffHours = (lastTime - firstTime) / (1000 * 60 * 60);
 
-      const dropRate =
-        timeDiffMinutes > 0
-          ? parseFloat(((firstSoil - lastSoil) / timeDiffMinutes).toFixed(4))
-          : 0;
+      // 5. Calculate drop rate
+      let rate = 0;
+      if (timeDiffHours > 0) {
+        rate = parseFloat(((firstSoil - lastSoil) / timeDiffHours).toFixed(4));
+      }
 
+      // 6. If rate is negative, it's a gain, not a drop
+      const isGain = rate < 0;
+
+      // 7. Respond with details
       res.json({
-        drop_rate: dropRate,
-        unit: "% per minute",
+        drop_rate: Math.abs(rate),
+        unit: isGain ? "% gain per hour" : "% drop per hour",
         soil_start: firstSoil,
         soil_end: lastSoil,
-        duration_minutes: parseFloat(timeDiffMinutes.toFixed(2)),
+        duration_hours: parseFloat(timeDiffHours.toFixed(2)),
+        reason: isGain ? "Moisture increased over this period" : undefined
       });
     } catch (error) {
       console.error("Drop rate endpoint error:", error);
@@ -316,46 +340,77 @@ export function createServer() {
             Math.min(0.5 + Math.abs(soil - thresholds.dry) / 100, 1.0).toFixed(2)
           );
 
-      // Estimate next watering time using recent drop rate
-      const recentData = await sensorCollection
-        .find()
-        .sort({ timestamp: -1 })
-        .limit(20)
+
+      // --- Estimate next watering using (current moisture - dry threshold) / drop rate ---
+      // 1. Get drop rate using same logic as /api/plant/:id/drop-rate
+      const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+      let dropData = await sensorCollection
+        .find({ timestamp: { $gte: twoDaysAgo } })
+        .sort({ timestamp: 1 })
         .toArray();
+      if (dropData.length < 2) {
+        dropData = await sensorCollection
+          .find()
+          .sort({ timestamp: 1 })
+          .toArray();
+      }
+      let dropRate = 0;
+      if (dropData.length >= 2) {
+        const firstSoil = getSoil(dropData[0], id);
+        const lastSoil = getSoil(dropData[dropData.length - 1], id);
+        const firstTime = new Date(dropData[0].timestamp).getTime();
+        const lastTime = new Date(dropData[dropData.length - 1].timestamp).getTime();
+        const timeDiffHours = (lastTime - firstTime) / (1000 * 60 * 60);
+        if (timeDiffHours > 0) {
+          dropRate = (firstSoil - lastSoil) / timeDiffHours;
+        }
+      }
 
 
-      // Plant-type-based fallback intervals (in days)
+      // 2. Calculate or retrieve steady estimated next watering time
+      let estimatedNextWatering: string | null = null;
+      const cache = nextWateringCache[id];
+      let shouldUpdateEstimate = false;
+
+      // Check if a watering event occurred (moisture jump)
+      let wateringEvent = false;
+      if (dropData.length >= 2) {
+        const prevSoil = getSoil(dropData[dropData.length - 2], id);
+        if (soil - prevSoil > 2) {
+          wateringEvent = true;
+        }
+      }
+
+      // If no cache, or soil changed >3%, or watering event, or estimate expired, recalculate
+      if (!cache || Math.abs(soil - cache.soil) > 3 || wateringEvent || (cache.expires && Date.now() > cache.expires)) {
+        if (dropRate > 0 && soil > thresholds.dry) {
+          const hoursUntilDry = (soil - thresholds.dry) / dropRate;
+          estimatedNextWatering = new Date(Date.now() + hoursUntilDry * 60 * 60 * 1000).toISOString();
+          // Set expiry to the estimated time
+          nextWateringCache[id] = {
+            soil,
+            estimate: estimatedNextWatering,
+            expires: Date.now() + hoursUntilDry * 60 * 60 * 1000
+          };
+        }
+      } else {
+        estimatedNextWatering = cache.estimate;
+      }
+
+      // 3. Fallback: always provide a value if null
       const fallbackDays: Record<string, number> = {
         money_plant: 2,
         snake_plant: 4,
         cactus: 7,
       };
-      let estimatedNextWatering: string | null = null;
-
-      if (recentData.length >= 2) {
-        const oldest = recentData[recentData.length - 1];
-        const newest = recentData[0];
-        const soilOld = getSoil(oldest, id);
-        const soilNew = getSoil(newest, id);
-        const timeDiffMin =
-          (new Date(newest.timestamp).getTime() -
-            new Date(oldest.timestamp).getTime()) /
-          60000;
-        const dropRatePerMin =
-          timeDiffMin > 0 ? (soilOld - soilNew) / timeDiffMin : 0;
-
-        if (dropRatePerMin > 0 && soilNew > thresholds.dry) {
-          const minsUntilDry = (soilNew - thresholds.dry) / dropRatePerMin;
-          estimatedNextWatering = new Date(
-            Date.now() + minsUntilDry * 60000
-          ).toISOString();
-        }
-      }
-
-      // Fallback: always provide a value if null
       if (!estimatedNextWatering) {
         const fallback = fallbackDays[plantType] || 3;
         estimatedNextWatering = new Date(Date.now() + fallback * 24 * 60 * 60 * 1000).toISOString();
+        nextWateringCache[id] = {
+          soil,
+          estimate: estimatedNextWatering,
+          expires: Date.now() + fallback * 24 * 60 * 60 * 1000
+        };
       }
 
       // Dynamic insight text
@@ -422,6 +477,9 @@ export function createServer() {
         });
       }
 
+      // Helper to compute water delivered in ml for an event
+      const getWaterDelivered = (e: any) => (e.duration_sec ?? 0) * PUMP_FLOW_RATE_ML_PER_SEC;
+
       const now = new Date();
 
       const todayStart = new Date(now);
@@ -440,16 +498,16 @@ export function createServer() {
 
       const totalEvents = allEvents.length;
       const totalWater = allEvents.reduce(
-        (sum: number, e: any) => sum + (e.impact_gain ?? 0),
+        (sum: number, e: any) => sum + getWaterDelivered(e),
         0
       );
       const avgWaterPerEvent = totalEvents > 0 ? totalWater / totalEvents : 0;
       const todayTotal = todayEvents.reduce(
-        (sum: number, e: any) => sum + (e.impact_gain ?? 0),
+        (sum: number, e: any) => sum + getWaterDelivered(e),
         0
       );
       const weeklyTotal = weeklyEvents.reduce(
-        (sum: number, e: any) => sum + (e.impact_gain ?? 0),
+        (sum: number, e: any) => sum + getWaterDelivered(e),
         0
       );
 
@@ -464,7 +522,7 @@ export function createServer() {
         weekly_total: parseFloat(weeklyTotal.toFixed(2)),
         // Last event details for Water Delivered card
         last_event: {
-          water_delivered: lastEvent.impact_gain ?? 0,
+          water_delivered: getWaterDelivered(lastEvent),
           soil_before: lastEvent.soil_before ?? 0,
           soil_after: lastEvent.soil_after ?? 0,
           duration_sec: lastEvent.duration_sec ?? 0,
@@ -473,7 +531,7 @@ export function createServer() {
         // Full event list for table or weekly chart
         events: allEvents.map((e: any) => ({
           timestamp: e.timestamp,
-          impact_gain: e.impact_gain ?? 0,
+          impact_gain: getWaterDelivered(e),
           soil_before: e.soil_before ?? 0,
           soil_after: e.soil_after ?? 0,
           duration_sec: e.duration_sec ?? 0,

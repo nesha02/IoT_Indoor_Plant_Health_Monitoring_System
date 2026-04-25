@@ -7,17 +7,18 @@ import {
 import { ChevronDown } from "lucide-react";
 
 interface AdvancedAnalyticsProps {
-  data: {
-    irrigationImpact: {
-      amount: number;
-      previousMoisture: number;
-      currentMoisture: number;
-      moistureIncrease: number;
+  data?: {
+    irrigationImpact?: {
+      amount?: number;
+      previousMoisture?: number;
+      currentMoisture?: number;
+      moistureIncrease?: number;
     };
-    analytics: {
-      dropRate: number;
-      avgWaterPerEvent: number;
-      weeklyUsage: number;
+    analytics?: {
+      dropRate?: number;
+      dropRateUnit?: string;
+      avgWaterPerEvent?: number;
+      weeklyUsage?: number;
     };
   };
 }
@@ -26,6 +27,26 @@ export default function AdvancedAnalytics({
   data,
 }: AdvancedAnalyticsProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  // Fallbacks for missing data
+  const irrigation = data?.irrigationImpact || {};
+  const analytics = data?.analytics || {};
+  const hasData =
+    typeof irrigation.amount === 'number' ||
+    typeof irrigation.previousMoisture === 'number' ||
+    typeof irrigation.currentMoisture === 'number' ||
+    typeof irrigation.moistureIncrease === 'number' ||
+    typeof analytics.dropRate === 'number' ||
+    typeof analytics.avgWaterPerEvent === 'number' ||
+    typeof analytics.weeklyUsage === 'number';
+
+  if (!hasData) {
+    return (
+      <div className="rounded-lg border border-ui-border bg-ui-bg-card p-6 text-center text-ui-text-muted">
+        No advanced analytics data available.
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-lg border border-ui-border bg-ui-bg-card">
@@ -56,7 +77,7 @@ export default function AdvancedAnalytics({
                     Water Delivered
                   </span>
                   <span className="font-semibold text-ui-text-primary">
-                    {data.irrigationImpact.amount} mL
+                    {typeof irrigation.amount === 'number' ? irrigation.amount : '-'} mL
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -64,7 +85,7 @@ export default function AdvancedAnalytics({
                     Moisture Before
                   </span>
                   <span className="font-semibold text-ui-text-primary">
-                    {data.irrigationImpact.previousMoisture}%
+                    {typeof irrigation.previousMoisture === 'number' ? irrigation.previousMoisture : '-'}%
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -72,7 +93,7 @@ export default function AdvancedAnalytics({
                     Moisture After
                   </span>
                   <span className="font-semibold text-ui-text-primary">
-                    {data.irrigationImpact.currentMoisture}%
+                    {typeof irrigation.currentMoisture === 'number' ? irrigation.currentMoisture : '-'}%
                   </span>
                 </div>
                 <div className="pt-2 border-t border-green-primary/30">
@@ -81,7 +102,7 @@ export default function AdvancedAnalytics({
                       Moisture Increase
                     </span>
                     <span className="font-bold text-green-primary text-lg">
-                      +{data.irrigationImpact.moistureIncrease}%
+                      +{typeof irrigation.moistureIncrease === 'number' ? irrigation.moistureIncrease : '-'}%
                     </span>
                   </div>
                 </div>
@@ -95,9 +116,9 @@ export default function AdvancedAnalytics({
                   Moisture Drop Rate
                 </p>
                 <p className="text-2xl font-bold text-ui-text-primary">
-                  {data.analytics.dropRate}%
+                  {typeof analytics.dropRate === 'number' ? analytics.dropRate : '-'}
                 </p>
-                <p className="text-xs text-ui-text-muted mt-1">per hour</p>
+                <p className="text-xs text-ui-text-muted mt-1">{analytics.dropRateUnit || '% drop per hour'}</p>
               </div>
 
               <div className="rounded-lg border border-ui-border bg-ui-bg-secondary p-4">
@@ -105,7 +126,7 @@ export default function AdvancedAnalytics({
                   Average Water per Event
                 </p>
                 <p className="text-2xl font-bold text-ui-text-primary">
-                  {data.analytics.avgWaterPerEvent} mL
+                  {typeof analytics.avgWaterPerEvent === 'number' ? analytics.avgWaterPerEvent : '-'} mL
                 </p>
               </div>
 
@@ -114,7 +135,7 @@ export default function AdvancedAnalytics({
                   Weekly Water Usage
                 </p>
                 <p className="text-2xl font-bold text-ui-text-primary">
-                  {data.analytics.weeklyUsage} mL
+                  {typeof analytics.weeklyUsage === 'number' ? analytics.weeklyUsage : '-'} mL
                 </p>
               </div>
             </div>

@@ -44,20 +44,22 @@ export default function Index() {
       setError(null);
       try {
         const id = plantIdMap[selectedPlant];
-        const [liveRes, historyRes, analyticsRes, waterRes] = await Promise.all([
+        const [liveRes, historyRes, analyticsRes, waterRes, dropRateRes] = await Promise.all([
           fetch(`/api/plant/${id}/live`),
           fetch(`/api/plant/${id}/history`),
           fetch(`/api/plant/${id}/analytics`),
           fetch(`/api/plant/${id}/water-analytics`),
+          fetch(`/api/plant/${id}/drop-rate`),
         ]);
-        if (!liveRes.ok || !historyRes.ok || !analyticsRes.ok || !waterRes.ok) {
+        if (!liveRes.ok || !historyRes.ok || !analyticsRes.ok || !waterRes.ok || !dropRateRes.ok) {
           throw new Error("Failed to fetch one or more endpoints");
         }
-        const [live, history, analytics, water] = await Promise.all([
+        const [live, history, analytics, water, dropRate] = await Promise.all([
           liveRes.json(),
           historyRes.json(),
           analyticsRes.json(),
           waterRes.json(),
+          dropRateRes.json(),
         ]);
         if (!isMounted) return;
         // Cache logic for estimated next watering
@@ -122,7 +124,8 @@ export default function Index() {
               (water.last_event?.soil_before ?? 0),
           },
           analytics: {
-            dropRate: analytics.drop_rate ?? 0,
+            dropRate: dropRate.drop_rate ?? 0,
+            dropRateUnit: dropRate.unit ?? '% drop per hour',
             avgWaterPerEvent: water.avg_water_per_event ?? 0,
             weeklyUsage: water.weekly_total ?? 0,
           },
@@ -148,20 +151,22 @@ export default function Index() {
     async function pollPlantData() {
       try {
         const id = plantIdMap[selectedPlant];
-        const [liveRes, historyRes, analyticsRes, waterRes] = await Promise.all([
+        const [liveRes, historyRes, analyticsRes, waterRes, dropRateRes] = await Promise.all([
           fetch(`/api/plant/${id}/live`),
           fetch(`/api/plant/${id}/history`),
           fetch(`/api/plant/${id}/analytics`),
           fetch(`/api/plant/${id}/water-analytics`),
+          fetch(`/api/plant/${id}/drop-rate`),
         ]);
-        if (!liveRes.ok || !historyRes.ok || !analyticsRes.ok || !waterRes.ok) {
+        if (!liveRes.ok || !historyRes.ok || !analyticsRes.ok || !waterRes.ok || !dropRateRes.ok) {
           throw new Error("Failed to fetch one or more endpoints");
         }
-        const [live, history, analytics, water] = await Promise.all([
+        const [live, history, analytics, water, dropRate] = await Promise.all([
           liveRes.json(),
           historyRes.json(),
           analyticsRes.json(),
           waterRes.json(),
+          dropRateRes.json(),
         ]);
         if (!isMounted) return;
         // Cache logic for estimated next watering in polling
@@ -233,7 +238,8 @@ export default function Index() {
               (water.last_event?.soil_before ?? 0),
           },
           analytics: {
-            dropRate: analytics.drop_rate ?? 0,
+            dropRate: dropRate.drop_rate ?? 0,
+            dropRateUnit: dropRate.unit ?? '% drop per hour',
             avgWaterPerEvent: water.avg_water_per_event ?? 0,
             weeklyUsage: water.weekly_total ?? 0,
           },
